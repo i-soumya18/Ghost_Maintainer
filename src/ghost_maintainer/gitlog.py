@@ -118,12 +118,13 @@ def stream_records(stream: Any, sep: str = "\x1e") -> Iterator[str]:
         buf += chunk
         parts = buf.split(sep)
         for part in parts[:-1]:
-            trimmed = part.strip()
+            trimmed = part.strip("\r\n")
             if trimmed:
                 yield trimmed
         buf = parts[-1]
-    if buf.strip():
-        yield buf.strip()
+    trimmed_buf = buf.strip("\r\n")
+    if trimmed_buf:
+        yield trimmed_buf
 
 
 def check_git_repo(repo_path: Path | str) -> None:
@@ -312,7 +313,7 @@ def parse_git_log(
     try:
         for rec in stream_records(proc.stdout, sep="\x1e"):
             parts = rec.split("\x1f", 6)
-            if len(parts) < 6:
+            if len(parts) < 5:
                 continue
             sha = parts[0].strip().lower()
             if not sha:
@@ -325,7 +326,7 @@ def parse_git_log(
             except ValueError:
                 dt = datetime.now()
             subject = parts[4].strip()
-            body = parts[5].strip()
+            body = parts[5].strip() if len(parts) > 5 else ""
             numstat_block = parts[6] if len(parts) > 6 else ""
 
             files: list[FileChange] = []

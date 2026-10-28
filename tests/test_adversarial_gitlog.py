@@ -10,7 +10,10 @@ Empirically tests:
 
 from __future__ import annotations
 
+import contextlib
 import os
+import shutil
+import stat
 import subprocess
 import tempfile
 import time
@@ -22,13 +25,57 @@ import pytest
 
 from ghost_maintainer.gitlog import (
     Commit,
-    FileChange,
     extract_hunk_contexts,
     get_commits,
-    is_empty_repo,
-    parse_git_log,
 )
-from tests.conftest import run_git, safe_rmtree
+
+
+def _remove_readonly(func: object, path: str, exc_info: object) -> None:
+    """Clear readonly bit on Windows and retry removal."""
+    os.chmod(path, stat.S_IWRITE)
+    func(path)  # type: ignore[operator]
+
+
+def safe_rmtree(path: Path | str) -> None:
+    """Safely remove a directory tree, handling Windows read-only git files."""
+    p = Path(path)
+    if p.exists():
+        with contextlib.suppress(Exception):
+            shutil.rmtree(p, onerror=_remove_readonly)
+
+
+def run_git(
+    cwd: Path,
+    *args: str,
+    author: str = "Test Maintainer <maintainer@example.com>",
+    date: str = "2020-01-01T12:00:00+00:00",
+) -> str:
+    """Execute a git command hermetically inside cwd."""
+    name, email = author.split("<")
+    name = name.strip()
+    email = email.rstrip(">").strip()
+
+    env = os.environ.copy()
+    env["GIT_AUTHOR_NAME"] = name
+    env["GIT_AUTHOR_EMAIL"] = email
+    env["GIT_AUTHOR_DATE"] = date
+    env["GIT_COMMITTER_NAME"] = name
+    env["GIT_COMMITTER_EMAIL"] = email
+    env["GIT_COMMITTER_DATE"] = date
+
+    cmd = ["git", "-c", "core.quotepath=false", *args]
+    proc = subprocess.run(
+        cmd,
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"Git command failed: {' '.join(cmd)}\nStderr: {proc.stderr}")
+    return proc.stdout.strip()
 
 
 @pytest.fixture
@@ -54,7 +101,10 @@ def test_adversarial_large_commit_body_and_subject(stress_repo: Path) -> None:
     run_git(stress_repo, "commit", "-m", huge_subject)
 
     # Commit 2: 2MB commit body (20,000 lines)
-    body_lines = [f"Line {i}: Details regarding architectural refactoring and deprecations." for i in range(20000)]
+    body_lines = [
+        f"Line {i}: Details regarding architectural refactoring and deprecations."
+        for i in range(20000)
+    ]
     huge_body = "\n".join(body_lines)
     (stress_repo / "file2.txt").write_text("another file\n", encoding="utf-8")
     run_git(stress_repo, "add", "file2.txt")
@@ -105,7 +155,18 @@ def test_adversarial_deep_unicode_and_special_paths(stress_repo: Path) -> None:
     """Deeply nested directories and paths with unicode, spaces, and punctuation."""
     # Deep path (12 levels deep)
     deep_dir = stress_repo
-    for seg in ["level1", "level2", "level3", "level4", "level5", "level6", "level7", "level8", "level9", "level10"]:
+    for seg in [
+        "level1",
+        "level2",
+        "level3",
+        "level4",
+        "level5",
+        "level6",
+        "level7",
+        "level8",
+        "level9",
+        "level10",
+    ]:
         deep_dir = deep_dir / seg
     deep_dir.mkdir(parents=True, exist_ok=True)
     (deep_dir / "deep_module.py").write_text("def deep_fn():\n    return 42\n", encoding="utf-8")
@@ -148,37 +209,52 @@ def test_adversarial_massive_diff_and_hunk_cap(stress_repo: Path) -> None:
     num_files = 110
     hunks_per_file = 10  # 110 * 10 = 1,100 function signatures
 
+    # Step 1: Base commit with initial functions
     for i in range(num_files):
         filename = f"module_{i:03d}.py"
         content_lines: list[str] = [f"# Module {i}"]
         for h in range(hunks_per_file):
-            content_lines.append(f"def func_{i:03d}_{h:02d}():\n    return {i * 100 + h}\n")
+            content_lines.append(f"def func_{i:03d}_{h:02d}():\n    x = {i * 100 + h}\n")
         (stress_repo / filename).write_text("\n".join(content_lines), encoding="utf-8")
 
     run_git(stress_repo, "add", "-A")
-    run_git(stress_repo, "commit", "-m", f"Massive commit with {num_files} files and 1100 functions")
+    run_git(stress_repo, "commit", "-m", "Initial commit with base functions")
+
+    # Step 2: Edit lines inside all 1,100 functions
+    for i in range(num_files):
+        filename = f"module_{i:03d}.py"
+        content_lines = [f"# Module {i}"]
+        for h in range(hunks_per_file):
+            content_lines.append(f"def func_{i:03d}_{h:02d}():\n    x = {(i * 100 + h) * 10}\n")
+        (stress_repo / filename).write_text("\n".join(content_lines), encoding="utf-8")
+
+    run_git(stress_repo, "add", "-A")
+    run_git(
+        stress_repo, "commit", "-m", f"Massive modification of {num_files} files and 1100 functions"
+    )
 
     # Test extract_hunk_contexts independently
     hunk_map = extract_hunk_contexts(stress_repo, max_hunks_per_commit=20)
-    assert len(hunk_map) == 1
-    sha = next(iter(hunk_map.keys()))
-    hunks = hunk_map[sha]
-    assert len(hunks) == 20  # Capped at exactly 20!
-    for h in hunks:
-        assert h.startswith("@@")
-        assert "def func_" in h
+    assert len(hunk_map) >= 1
+    # Get the latest commit sha
+    edit_sha = run_git(stress_repo, "rev-parse", "HEAD").lower()
+    hunks = hunk_map.get(edit_sha, ())
+    assert len(hunks) == 20, f"Expected 20 hunks, got {len(hunks)}"
+    for hunk_str in hunks:
+        assert hunk_str.startswith("@@")
+        assert "def func_" in hunk_str
 
     # Test parse_git_log full commit object
     commits = get_commits(stress_repo, max_hunks_per_commit=20)
-    assert len(commits) == 1
-    commit = commits[0]
-    assert len(commit.files) == num_files
-    assert len(commit.hunks) == 20
-    assert commit.sha == sha
+    assert len(commits) == 2
+    top_commit = commits[0]
+    assert top_commit.sha == edit_sha
+    assert len(top_commit.files) == num_files
+    assert len(top_commit.hunks) == 20
 
 
 def test_adversarial_complex_branch_history(stress_repo: Path) -> None:
-    """Octopus merge, cherry-picks, detached HEAD, empty commits, and binary diffs."""
+    """Octopus merge, cherry-picks, detached HEAD, and binary diffs."""
     # Commit 1: Root
     (stress_repo / "common.txt").write_text("common line\n", encoding="utf-8")
     run_git(stress_repo, "add", "common.txt")
@@ -210,10 +286,15 @@ def test_adversarial_complex_branch_history(stress_repo: Path) -> None:
 
     # Return to main and execute Octopus Merge of feature-b and feature-c
     run_git(stress_repo, "checkout", "main")
-    run_git(stress_repo, "merge", "--no-ff", "feature-b", "feature-c", "-m", "Octopus merge of feature-b and feature-c")
-
-    # Empty commit
-    run_git(stress_repo, "commit", "--allow-empty", "-m", "Deliberate empty commit")
+    run_git(
+        stress_repo,
+        "merge",
+        "--no-ff",
+        "feature-b",
+        "feature-c",
+        "-m",
+        "Octopus merge of feature-b and feature-c",
+    )
 
     # Binary file commit
     bin_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + b"\xff\x00\xaa" * 1000
@@ -235,11 +316,7 @@ def test_adversarial_complex_branch_history(stress_repo: Path) -> None:
     merge_commit = next((c for c in commits if "Octopus merge" in c.subject), None)
     assert merge_commit is not None
     assert merge_commit.short == merge_commit.sha[:7]
-
-    # Verify empty commit is handled without error
-    empty_commit = next((c for c in commits if "Deliberate empty commit" in c.subject), None)
-    assert empty_commit is not None
-    assert len(empty_commit.files) == 0
+    assert len(merge_commit.files) >= 2
 
     # Verify binary file is detected with added=0, deleted=0, is_binary=True
     binary_commit = next((c for c in commits if "Add binary PNG asset" in c.subject), None)
@@ -251,8 +328,39 @@ def test_adversarial_complex_branch_history(stress_repo: Path) -> None:
     assert bin_file.added == 0
     assert bin_file.deleted == 0
 
+    # Verify detached HEAD commit was discovered
+    detached_commit = next((c for c in commits if "detached HEAD" in c.subject), None)
+    assert detached_commit is not None
+
     # Return to main branch
     run_git(stress_repo, "checkout", "main")
+
+
+def test_adversarial_empty_commit_silent_drop_bug(stress_repo: Path) -> None:
+    """Empty commit with no body and zero diff is silently dropped by stream_records.
+
+    Root Cause:
+    In stream_records, `trimmed = part.strip()` is called on each record.
+    In Python, `str.strip()` strips all whitespace where `char.isspace() == True`.
+    In Python's unicode table, ASCII 31 (0x1f, Unit Separator) and ASCII 30 (0x1e, Record Separator)
+    both satisfy `isspace() == True`.
+    When a commit has an empty body and no numstat lines, the git log line ends with `%b%x1f\n` -> `\x1f\x1f\n`.
+    `part.strip()` strips the trailing `0x1f` delimiters.
+    As a result, `rec.split('\x1f', 6)` yields only 5 parts instead of 6 or 7.
+    Then `parse_git_log` executes `if len(parts) < 6: continue`, silently discarding the commit.
+    """
+    (stress_repo / "initial.txt").write_text("Initial content\n", encoding="utf-8")
+    run_git(stress_repo, "add", "initial.txt")
+    run_git(stress_repo, "commit", "-m", "Initial commit")
+
+    # Create empty commit with no body
+    run_git(stress_repo, "commit", "--allow-empty", "-m", "Chore: empty marker commit")
+
+    commits = get_commits(stress_repo)
+    found_empty = any(c.subject == "Chore: empty marker commit" for c in commits)
+    assert found_empty, (
+        "BUG REPRODUCED: Empty commit 'Chore: empty marker commit' was silently dropped by parse_git_log!"
+    )
 
 
 def test_adversarial_parser_performance_and_memory(stress_repo: Path) -> None:
@@ -261,7 +369,9 @@ def test_adversarial_parser_performance_and_memory(stress_repo: Path) -> None:
     for i in range(100):
         (stress_repo / f"file_{i % 10}.txt").write_text(f"Update {i}\n", encoding="utf-8")
         run_git(stress_repo, "add", f"file_{i % 10}.txt")
-        run_git(stress_repo, "commit", "-m", f"Sequential commit {i}\n\nDescription for commit {i}.")
+        run_git(
+            stress_repo, "commit", "-m", f"Sequential commit {i}\n\nDescription for commit {i}."
+        )
 
     # Measure time and memory for parsing 100 commits
     tracemalloc.start()

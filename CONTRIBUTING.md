@@ -19,8 +19,8 @@ The Ghost Maintainer is built using **Python 3.12** and managed with [`uv`](http
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/ghost-maintainer.git
-cd ghost-maintainer
+git clone https://github.com/i-soumya18/Ghost_Maintainer.git
+cd Ghost_Maintainer
 ```
 
 ### 2. Set Up Python Environment

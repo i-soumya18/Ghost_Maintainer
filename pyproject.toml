@@ -12,6 +12,7 @@ requires-python = ">=3.10,<3.13"
 authors = [
     { name = "Ghost Maintainer Authors" }
 ]
+urls = { Homepage = "https://github.com/i-soumya18/Ghost_Maintainer", Repository = "https://github.com/i-soumya18/Ghost_Maintainer", Issues = "https://github.com/i-soumya18/Ghost_Maintainer/issues" }
 keywords = [
     "git",
     "archaeology",

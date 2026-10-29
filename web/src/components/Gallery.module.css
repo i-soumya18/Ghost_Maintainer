@@ -22,7 +22,7 @@
 
 .title {
   font-family: var(--font-voice);
-  font-size: 1.55rem;
+  font-size: clamp(1.3rem, 4vw, 1.55rem);
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 0.25rem;
@@ -30,7 +30,7 @@
 
 .subtitle {
   font-family: var(--font-ui);
-  font-size: 0.88rem;
+  font-size: clamp(0.82rem, 2vw, 0.88rem);
   color: var(--color-text-muted);
   max-width: 580px;
   line-height: 1.45;
@@ -51,6 +51,7 @@
   outline: none;
   width: 220px;
   transition: all var(--duration-fast) var(--ease-standard);
+  box-sizing: border-box;
 }
 
 .searchInput:focus {
@@ -60,8 +61,26 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .searchBox {
+    width: 100%;
+  }
+  .searchInput {
+    width: 100%;
+  }
+  .tombstoneCard {
+    padding: 1rem;
+  }
 }
 
 .tombstoneCard {

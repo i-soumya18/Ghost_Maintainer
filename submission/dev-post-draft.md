@@ -3,7 +3,7 @@ title: "The Ghost Maintainer: A Séance for Dead Repositories (And How We Proved
 published: false
 description: "We built an archaeological AI that speaks in the collective voice of abandoned repo maintainers—where every single claim must cite a real git commit hash or stay silent."
 tags: hacktoberfest, ai, opensource, python, webdev
-canonical_url: https://github.com/your-username/ghost-maintainer
+canonical_url: https://github.com/i-soumya18/Ghost_Maintainer
 ai_disclosure_level: some_ai
 ---
 
@@ -181,15 +181,15 @@ Following Apple Human Interface Guidelines and WCAG AA standards:
 
 ### Zero Install: Interactive Hosted Replay Demo
 You can try The Ghost Maintainer right now in your browser with zero install:
-**[Launch Interactive Replay Demo](https://your-username.github.io/ghost-maintainer)**
+**[Launch Interactive Replay Demo](https://i-soumya18.github.io/Ghost_Maintainer)**
 
 ### Run Locally on Consumer Hardware (4GB VRAM)
 You can run The Ghost Maintainer locally with 100% privacy in under two minutes:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/ghost-maintainer.git
-cd ghost-maintainer
+git clone https://github.com/i-soumya18/Ghost_Maintainer.git
+cd Ghost_Maintainer
 
 # 2. Install dependencies with uv
 uv sync --all-extras
@@ -221,4 +221,4 @@ If you have an old repository gathering dust in your GitHub archive, go wake its
 
 ---
 
-*The Ghost Maintainer is open-source under the MIT License. Contributions, issue reproductions, and benchmark evaluations are welcome on [GitHub](https://github.com/your-username/ghost-maintainer).*
+*The Ghost Maintainer is open-source under the MIT License. Contributions, issue reproductions, and benchmark evaluations are welcome on [GitHub](https://github.com/i-soumya18/Ghost_Maintainer).*

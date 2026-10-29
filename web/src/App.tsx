@@ -354,6 +354,7 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('seance');
   const [proofModalData, setProofModalData] = useState<ProofCardData | null>(null);
   const [konamiNotice, setKonamiNotice] = useState<string | null>(null);
+  const [mobileEvidenceOpen, setMobileEvidenceOpen] = useState(false);
 
   const pendingAutoQuestion = useRef<string | null>(null);
   const konamiSeq = useRef<string[]>([]);
@@ -481,6 +482,7 @@ export const App: React.FC = () => {
     setMessages([]);
     setDrawerSha(null);
     setActiveTab('seance');
+    setMobileEvidenceOpen(false);
     source.repos().then(setKnownRepos).catch(() => {});
   }, [abortAsk, resetAsk]);
 
@@ -568,6 +570,8 @@ export const App: React.FC = () => {
                 suggestions={curatedQuestions}
                 onShareProof={handleShareProof}
                 onOpenLieDetector={() => setActiveTab('compare')}
+                evidenceCount={latestEvidence.length}
+                onToggleMobileEvidence={() => setMobileEvidenceOpen((v) => !v)}
               />
               <EvidenceRail
                 evidence={latestEvidence}
@@ -575,6 +579,8 @@ export const App: React.FC = () => {
                 onHoverSha={setHighlightedSha}
                 onClickSha={setDrawerSha}
                 isLoading={askState.phase === 'retrieving'}
+                isOpenOnMobile={mobileEvidenceOpen}
+                onCloseMobile={() => setMobileEvidenceOpen(false)}
               />
             </>
           )

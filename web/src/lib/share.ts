@@ -98,7 +98,7 @@ export async function downloadProofCard(data: ProofCardData): Promise<void> {
 
   ctx.fillStyle = '#8a8275';
   ctx.font = '14px -apple-system, sans-serif';
-  ctx.fillText('github.com/your-username/ghost-maintainer', width - 380, height - 65);
+  ctx.fillText('github.com/i-soumya18/Ghost_Maintainer', width - 380, height - 65);
 
   // Trigger download
   const dataUrl = canvas.toDataURL('image/png');
@@ -151,6 +151,6 @@ export function getTwitterShareUrl(data: ProofCardData): string {
  * Generate formatted Reddit share markdown snippet.
  */
 export function getRedditShareText(data: ProofCardData): string {
-  return `**Interrogating the ghost of ${data.repoName}**\n\n> Q: "${data.question}"\n\n${data.answerSnippet}\n\n*Verified by [The Ghost Maintainer](https://github.com/your-username/ghost-maintainer) — 100% git commit peeled.*`;
+  return `**Interrogating the ghost of ${data.repoName}**\n\n> Q: "${data.question}"\n\n${data.answerSnippet}\n\n*Verified by [The Ghost Maintainer](https://github.com/i-soumya18/Ghost_Maintainer) — 100% git commit peeled.*`;
 }
 

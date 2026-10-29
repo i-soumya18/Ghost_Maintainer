@@ -60,13 +60,13 @@ The web interface is built with Apple-grade archival aesthetics:
 
 ### Tweet 6 (Try it now)
 Zero install required. Try the live demo right in your browser on GitHub Pages:
-🔗 https://your-username.github.io/ghost-maintainer
+🔗 https://i-soumya18.github.io/Ghost_Maintainer
 
 Or run it locally with 100% privacy:
 `uv run ghost summon https://github.com/request/request`
 `uv run ghost ask "Why did request switch test coverage tool to nyc?"`
 
-⭐ Star it on GitHub: https://github.com/your-username/ghost-maintainer
+⭐ Star it on GitHub: https://github.com/i-soumya18/Ghost_Maintainer
 
 ---
 
@@ -76,7 +76,7 @@ Or run it locally with 100% privacy:
 > Show HN: The Ghost Maintainer – Codebase archaeology where AI cites git commits or stays silent
 
 **URL:**
-> https://github.com/your-username/ghost-maintainer
+> https://github.com/i-soumya18/Ghost_Maintainer
 
 **Text Submission:**
 
@@ -105,10 +105,10 @@ To solve this, we built a 3-stage defense-in-depth honesty pipeline:
 We also built an interactive web app with a side-by-side **AI Lie Detector**, an interactive **Graveyard Timeline**, and downloadable **Proof Cards**.
 
 Zero-install demo running on GitHub Pages:
-https://your-username.github.io/ghost-maintainer
+https://i-soumya18.github.io/Ghost_Maintainer
 
 Code (MIT):
-https://github.com/your-username/ghost-maintainer
+https://github.com/i-soumya18/Ghost_Maintainer
 
 Feedback and questions about the honesty verifier are very welcome!
 

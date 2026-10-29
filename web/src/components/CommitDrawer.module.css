@@ -190,3 +190,20 @@
   overflow-x: auto;
   line-height: 1.45;
 }
+
+@media (max-width: 640px) {
+  .drawer {
+    width: 100vw;
+    border-left: none;
+  }
+  .drawerHeader {
+    padding: 12px 14px;
+  }
+  .content {
+    padding: 14px;
+  }
+  .diffPre {
+    padding: 8px;
+    font-size: 0.72rem;
+  }
+}

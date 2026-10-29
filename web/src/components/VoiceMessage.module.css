@@ -201,3 +201,26 @@
   color: var(--color-text-muted);
   margin: 0;
 }
+
+@media (max-width: 640px) {
+  .bubble {
+    padding: 14px 16px;
+    max-width: 95%;
+  }
+  .assistantText {
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+  .userText {
+    font-size: 0.95rem;
+  }
+  .messageFooter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .actionButtons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

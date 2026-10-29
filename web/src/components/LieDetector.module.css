@@ -2,10 +2,11 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 1.5rem;
+  padding: 1.5rem 1rem;
   max-width: 1080px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .heroBanner {
@@ -28,7 +29,7 @@
 
 .title {
   font-family: var(--font-voice);
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 0.5rem;
@@ -36,11 +37,12 @@
 
 .tagline {
   font-family: var(--font-ui);
-  font-size: 0.95rem;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
   color: var(--color-text-muted);
   max-width: 650px;
   margin: 0 auto 1.5rem;
   line-height: 1.5;
+  padding: 0 0.5rem;
 }
 
 .caseSelector {
@@ -63,6 +65,18 @@
   transition: all var(--duration-fast) var(--ease-standard);
   max-width: 320px;
   text-align: left;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .caseSelector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .caseBtn {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 .caseBtn:hover {
@@ -165,6 +179,20 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 280px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .narrativeBoxRaw,
+  .narrativeBoxGuarded {
+    padding: 1rem;
+    min-height: auto;
+  }
+  .verdictFooter {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
 }
 
 .narrativeText {

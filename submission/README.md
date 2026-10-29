@@ -29,6 +29,6 @@ Comprehensive 5-category submission readiness audit covering:
 ## 🚀 Publication Instructions
 
 1. Copy the contents of [`dev-post-draft.md`](dev-post-draft.md) into the DEV post editor.
-2. Replace any placeholder GitHub repository links (`your-username`) with your personal repository URL.
+2. Verify repository links pointing to `https://github.com/i-soumya18/Ghost_Maintainer`.
 3. Attach demonstration recordings or interface screenshots from `web/` and CLI sessions.
 4. Publish on DEV and submit the article URL to MyMLH before the challenge deadline.

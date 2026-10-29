@@ -1,6 +1,6 @@
 # The Ghost Maintainer 👻
 
-[![CI](https://github.com/your-username/ghost-maintainer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/ghost-maintainer/actions/workflows/ci.yml)
+[![CI](https://github.com/i-soumya18/Ghost_Maintainer/actions/workflows/ci.yml/badge.svg)](https://github.com/i-soumya18/Ghost_Maintainer/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
@@ -153,8 +153,8 @@ ghost-maintainer/
 Clone the repository and sync pinned dependencies with `uv`:
 
 ```bash
-git clone https://github.com/your-username/ghost-maintainer.git
-cd ghost-maintainer
+git clone https://github.com/i-soumya18/Ghost_Maintainer.git
+cd Ghost_Maintainer
 uv sync --all-extras
 ```
 

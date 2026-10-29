@@ -216,3 +216,36 @@
   color: var(--color-accent);
 }
 
+@media (max-width: 640px) {
+  .backdrop {
+    padding: 0.75rem;
+  }
+  .modal {
+    padding: 1rem;
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+  .certificate {
+    padding: 1rem;
+  }
+  .certRepo {
+    font-size: 1.15rem;
+  }
+  .certQuestion {
+    font-size: 0.9rem;
+  }
+  .certResponse {
+    font-size: 0.85rem;
+  }
+  .actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .downloadBtn,
+  .twitterBtn,
+  .copyBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

@@ -123,7 +123,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
 
           <a
-            href="https://github.com/your-username/ghost-maintainer"
+            href="https://github.com/i-soumya18/Ghost_Maintainer"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.githubLink}

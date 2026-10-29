@@ -16,6 +16,8 @@ interface SeanceScreenProps {
   suggestions?: string[];
   onShareProof?: (message: Message) => void;
   onOpenLieDetector?: () => void;
+  evidenceCount?: number;
+  onToggleMobileEvidence?: () => void;
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -35,6 +37,8 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
   suggestions,
   onShareProof,
   onOpenLieDetector,
+  evidenceCount = 0,
+  onToggleMobileEvidence,
 }) => {
   const [inputVal, setInputVal] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -115,6 +119,20 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
       </div>
 
       <div className={styles.inputArea}>
+        {evidenceCount > 0 && onToggleMobileEvidence && (
+          <div className={styles.mobileEvidencePillRow}>
+            <button
+              type="button"
+              className={styles.mobileEvidencePill}
+              onClick={onToggleMobileEvidence}
+              aria-label="View cited commits in archaeological evidence panel"
+            >
+              <span className={styles.evidencePillFlame}><Wick mood="idle" size={14} /></span>
+              <span>{evidenceCount} Evidence Commits</span>
+              <span className={styles.pillChevron}>↑</span>
+            </button>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className={styles.form}>
           <input
             type="text"

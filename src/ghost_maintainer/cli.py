@@ -466,7 +466,7 @@ def share(
         f"I held a séance with the departed maintainers of {repo_name} using The Ghost Maintainer 🕯\n\n"
         f'"{question}"\n\n'
         f"Every claim cites a verified git commit hash. Voices are fiction. Evidence is real.\n"
-        f"https://github.com/your-username/ghost-maintainer"
+        f"https://github.com/i-soumya18/Ghost_Maintainer"
     )
     tweet_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}"
 
@@ -474,7 +474,7 @@ def share(
         f"**Interrogating the ghost of {repo_name}**\n\n"
         f'> Q: "{question}"\n\n'
         f"{final_text}\n\n"
-        f"*100% verified against git object storage via [The Ghost Maintainer](https://github.com/your-username/ghost-maintainer)*"
+        f"*100% verified against git object storage via [The Ghost Maintainer](https://github.com/i-soumya18/Ghost_Maintainer)*"
     )
 
     # Display certificate

@@ -103,14 +103,13 @@ def main() -> int:
     parser.add_argument("--only", default=None, help="Only record this repo id.")
     args = parser.parse_args()
 
-    if args.backend == "mock":
-        if not args.allow_mock or args.out is None:
-            print(
-                "Refusing to record with the mock backend: its answers are canned and must not "
-                "be published as a demo. Pass --allow-mock AND an explicit --out for UI tests.",
-                file=sys.stderr,
-            )
-            return 2
+    if args.backend == "mock" and (not args.allow_mock or args.out is None):
+        print(
+            "Refusing to record with the mock backend: its answers are canned and must not "
+            "be published as a demo. Pass --allow-mock AND an explicit --out for UI tests.",
+            file=sys.stderr,
+        )
+        return 2
     out: Path = args.out or DEFAULT_OUT
     warnings.simplefilter("ignore", ShallowCloneWarning)
 

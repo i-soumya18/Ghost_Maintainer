@@ -23,6 +23,9 @@ export const SummonScreen: React.FC<SummonScreenProps> = ({
   onOpenLieDetector,
 }) => {
   const [repoInput, setRepoInput] = useState('');
+  const [showAllKnown, setShowAllKnown] = useState(false);
+
+  const displayedRepos = showAllKnown ? knownRepos : knownRepos.slice(0, 4);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,9 +132,20 @@ export const SummonScreen: React.FC<SummonScreenProps> = ({
 
         {knownRepos.length > 0 && !replayMode && (
           <div className={styles.knownSection}>
-            <h3 className={styles.knownTitle}>Previously Summoned</h3>
+            <div className={styles.knownHeader}>
+              <h3 className={styles.knownTitle}>Previously Summoned</h3>
+              {knownRepos.length > 4 && (
+                <button
+                  type="button"
+                  className={styles.knownToggleBtn}
+                  onClick={() => setShowAllKnown((v) => !v)}
+                >
+                  {showAllKnown ? 'Show fewer' : `+${knownRepos.length - 4} more`}
+                </button>
+              )}
+            </div>
             <ul className={styles.knownList}>
-              {knownRepos.map((repo) => (
+              {displayedRepos.map((repo) => (
                 <li key={repo.path} className={styles.knownItem}>
                   <button
                     type="button"

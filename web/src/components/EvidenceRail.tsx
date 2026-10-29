@@ -11,6 +11,8 @@ interface EvidenceRailProps {
   onHoverSha?: (sha: string | null) => void;
   onClickSha?: (sha: string) => void;
   isLoading?: boolean;
+  isOpenOnMobile?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const EvidenceRail: React.FC<EvidenceRailProps> = ({
@@ -19,19 +21,44 @@ export const EvidenceRail: React.FC<EvidenceRailProps> = ({
   onHoverSha,
   onClickSha,
   isLoading = false,
+  isOpenOnMobile = false,
+  onCloseMobile,
 }) => {
   return (
-    <aside className={styles.rail} aria-label="Archaeological evidence cards">
-      <div className={styles.stickyHeader}>
-        <h3 className={styles.title}>
-          <span className={styles.flame}><Wick mood="idle" size={18} /></span> Archive Evidence
-        </h3>
-        <span className={styles.count}>
-          {evidence.length > 0
-            ? `${evidence.length} commits cited`
-            : 'Awaiting query'}
-        </span>
-      </div>
+    <>
+      {isOpenOnMobile && (
+        <div
+          className={styles.mobileBackdrop}
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`${styles.rail} ${isOpenOnMobile ? styles.railMobileOpen : ''}`}
+        aria-label="Archaeological evidence cards"
+      >
+        <div className={styles.stickyHeader}>
+          <h3 className={styles.title}>
+            <span className={styles.flame}><Wick mood="idle" size={18} /></span> Archive Evidence
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className={styles.count}>
+              {evidence.length > 0
+                ? `${evidence.length} cited`
+                : 'Awaiting query'}
+            </span>
+            {onCloseMobile && (
+              <button
+                type="button"
+                className={styles.mobileCloseBtn}
+                onClick={onCloseMobile}
+                aria-label="Close evidence sheet"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
 
       <div className={styles.scrollArea}>
         {evidence.length > 1 && (
@@ -77,5 +104,6 @@ export const EvidenceRail: React.FC<EvidenceRailProps> = ({
         })}
       </div>
     </aside>
-  );
+  </>
+);
 };

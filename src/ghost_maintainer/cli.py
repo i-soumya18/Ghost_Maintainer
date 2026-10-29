@@ -43,13 +43,22 @@ from ghost_maintainer.seance import (
 )
 from ghost_maintainer.verify import VerificationResult
 
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 app = typer.Typer(
     name="ghost",
     help="The Ghost Maintainer: verifiable, local AI codebase archaeology tool.",
     no_args_is_help=True,
 )
 
-console = Console()
+console = Console(safe_box=True)
 
 
 @app.callback(invoke_without_command=True)

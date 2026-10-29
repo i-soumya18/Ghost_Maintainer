@@ -1,18 +1,19 @@
 # The Ghost Maintainer 👻
 
 [![CI](https://github.com/your-username/ghost-maintainer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/ghost-maintainer/actions/workflows/ci.yml)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Type Checked: Mypy](https://img.shields.io/badge/type--checked-mypy-blue.svg)](http://mypy-lang.org/)
-[![Hacktoberfest 2026](https://img.shields.io/badge/Hacktoberfest-2026-orange.svg)](https://hacktoberfest.com/)
+[![Mypy](https://img.shields.io/badge/types-mypy%20strict-blue)](https://mypy.readthedocs.io/)
+[![Hacktoberfest 2026](https://img.shields.io/badge/Hacktoberfest%202026-Ghost%20in%20the%20Machine-orange)](https://hacktoberfest.com/)
 
 > *"Voices are fiction. Evidence is real."*  
 > — Ghost Maintainer Core Invariant
 
-**The Ghost Maintainer** is a verifiable, local AI codebase archaeology tool. Point it at an abandoned git repository, and ask historical questions like *"Why was the auth module rewritten?"* or *"Who decided to drop Node.js v4 compatibility?"*. 
+**The Ghost Maintainer** is a verifiable, local AI codebase archaeology tool. Point it at an abandoned git repository, and question departed maintainers about past decisions: *"Why was auth rewritten?"*, *"Why was request deprecated?"*, or *"Who dropped Windows CI?"*.
 
-A local language model answers in the intimate collective voice of the departed maintainers (*"we"*), but **every single claim must cite a real commit hash and message from repository history**. If the git history contains no evidence, or if the question contains a false premise, the system strictly refuses:
+A local open-weight language model answers in the intimate collective voice of the former maintainers (*"we"*), but **every single factual claim must cite a verified git commit hash and diff hunk from repository history**. If the git history contains no evidence, or if an inquiry poses a false premise, the system strictly refuses:
 
 > **"The dead do not remember."**
 
@@ -21,200 +22,261 @@ A local language model answers in the intimate collective voice of the departed 
 ## 🏛️ System Architecture
 
 ```
-                         +-----------------------------+
-                         |      Target Git Repo        |
-                         |   (STRICTLY READ-ONLY)      |
-                         +--------------+--------------+
-                                        │ git log (0x1e/0x1f stream)
-                                        ▼
-                         +-----------------------------+
-                         |  Git Archaeology Engine     |
-                         |        (gitlog.py)          |
-                         +--------------+--------------+
-                                        │ CommitStream
-                                        ▼
-                         +-----------------------------+
-                         |      BM25 Index & Store     |
-                         |    (~/.ghost/<repo-hash>/)  |
-                         +--------------+--------------+
-                                        │ Top Evidence Chunks
-                                        ▼
-+---------------+        +-----------------------------+        +---------------+
-|  CLI Surface  | <====> |  Honesty & Inference Engine | <====> |   Web Server  |
-|  (Typer/Rich) |        |    (Prompt, Verify, Seance) |        | (FastAPI SSE) |
-+---------------+        +--------------+--------------+        +-------+-------+
-                                        │                               │
-                                        ▼                               ▼
-                         +-----------------------------+        +---------------+
-                         |     Inference Backends      |        | React Web UI  |
-                         | (Unsloth / OpenAI / Mock)   |        |  (Candlelit)  |
-                         +-----------------------------+        +---------------+
+Target Git Repository (Strictly Read-Only)
+      │
+      │ git log -c core.quotepath=false --all --no-color --numstat
+      │ ASCII Control Stream (0x1e record / 0x1f unit separators) + hunk diffs (-p -U0)
+      ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      Git Archaeology Engine                            │
+│  - Single-pass commit parser (`gitlog.py`)                             │
+│  - Immutable `Commit` records & function signature contexts            │
+│  - Shallow clone detector ("History is shallow; dead remember less.")  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ CommitStream
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Lexical Index & Cache                           │
+│  - `bm25s` with English Snowball stemming (`index.py`, `retrieve.py`)  │
+│  - Field boosting: subject ×2, body ×1, author ×1, paths ×2, hunks ×1  │
+│  - Isolated cache: `~/.ghost/<repo-hash>/` (invalidates on HEAD change)│
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Top-k Grounded Evidence (E1..Ek)
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│               3-Stage Defense-in-Depth Honesty Pipeline                │
+│                                                                        │
+│  [Stage 1: Retrieval Gate]                                             │
+│    Top BM25 score < GHOST_MIN_SCORE (0.8) ──► REFUSAL EARLY EXIT      │
+│                                                                        │
+│  [Stage 2: Post-Generation Sentinel Verifier]                          │
+│    - Abbreviation-aware sentence boundary segmentation                 │
+│    - Bracketed `[hash]` extraction & bare hex audit                    │
+│    - Commit peeling: `git cat-file -e <sha>^{commit}` (No tree/blob)   │
+│    - Evidence grounding membership: hash ∈ {E1..Ek}                    │
+│    - Lexical overlap support hint calculation                          │
+│                                                                        │
+│  [Stage 3: Guarded Remediation]                                        │
+│    - Diagnostic retry with specific violation feedback (max 1 retry)   │
+│    - Fallback claim-stripping: excise uncited/unverified sentences     │
+│    - Universal Refusal if 0 verified claims remain:                    │
+│      "The dead do not remember."                                       │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Verified Responses & Typed SSE Stream
+        ┌───────────────────────────┼───────────────────────────┐
+        ▼                           ▼                           ▼
+┌───────────────┐           ┌───────────────┐           ┌───────────────┐
+│  Typer / Rich │           │  FastAPI SSE  │           │ Vite React TS │
+│  Terminal CLI │           │ Server (:6660)│           │ Candlelit UI  │
+└───────────────┘           └───────────────┘           └───────────────┘
 ```
 
 ---
 
-## ✨ Key Capabilities
+## 🔒 Core Architectural Invariants
 
-- **Zero Target Repository Mutations**: The target repository is treated as strictly read-only. All indices, metadata stores, and cache files reside solely in `~/.ghost/<repo-hash>/`.
-- **High-Throughput Git Archaeology**: Single-pass `git log` streaming using ASCII record (`0x1e`) and unit (`0x1f`) separators. Parses thousands of commits in seconds while extracting function signature shifts (`-p -U0` capped at 20 signatures per commit).
-- **Fast Lexical Indexing**: Uses `bm25s` with English Snowball stemming and weighted tokenization, querying commit history in under 50ms with zero extra model weights.
-- **3-Stage Defense-in-Depth Honesty Pipeline**:
-  1. *Retrieval Gate*: Fails immediately to `"The dead do not remember."` if the top BM25 evidence score is below `0.8`.
-  2. *Post-Generation Sentinel Verifier*: Robust abbreviation-safe sentence splitting, git commit peeling via `git cat-file -e <sha>^{commit}` to prevent tree/blob injection, and retrieval grounding cross-checks.
-  3. *Guarded Remediation*: Targeted diagnostic feedback retry that repairs citations or cleanly excises ungrounded claims.
-- **Open-Weight Core Focus**: Built to run locally on consumer hardware (>= 4GB VRAM) via `unsloth` targeting `unsloth/Qwen3-4B-Instruct-2507-bnb-4bit` (4-bit quantization). Includes an `openai_compat` fallback for Ollama/llama.cpp and cloud endpoints.
-- **Candlelit Archive Web UI**: A minimal, tactile web application adhering to [Apple Human Interface Guidelines](docs/design.md) with an OKLCH ink/amber palette, `Fraunces` serif voice, and WCAG AA accessibility.
-- **Verified Honesty Benchmark**: Automated evaluation suite (`ghost eval`) reporting Citation Existence Rate (CER), Sentence Verification Rate (SVR), and Refusal Recall (RR) with Wilson 95% confidence intervals.
+1. **Zero Target Repository Mutation**:
+   The target repository is treated as strictly read-only. All indices, metadata stores, and cache files reside exclusively within `~/.ghost/<sha256(canonical_path)[:12]>/`. A target repository remains 100% untouched (`git status --porcelain` is identical before and after any ghost command).
+2. **3-Stage Honesty Defense-in-Depth**:
+   AI text generation is fundamentally untrusted. Answers must pass (1) Retrieval Gating, (2) Sentinel Post-Verification with genuine commit peeling (`git cat-file -e <sha>^{commit}`), and (3) Guarded Remediation. Fabricated citations are rejected, and any unsupported factual claim is either repaired or excised.
+3. **Consumer Hardware Accessibility**:
+   Runs locally on standard developer hardware (>= 4GB VRAM) via `unsloth` targeting `unsloth/Qwen3-4B-Instruct-2507-bnb-4bit` with 4-bit quantization, greedy decoding ($T = 0.0$), and `<think>` suppression for deterministic outputs.
 
 ---
 
-## 📊 Honesty Benchmark Results (`request/request`)
+## ✨ Multi-Paradigm Features
 
-Evaluated on 25 benchmark questions (15 real historical questions, 10 unanswerable false-premise traps) across the abandoned repository [`request/request`](https://github.com/request/request):
-
-| Metric | Raw Unfiltered Model | Guarded Honesty Pipeline | Target Standard |
-| :--- | :---: | :---: | :---: |
-| **Citation Existence Rate (CER)** | 71.4% [45.4%, 88.3%] | **100.0% [86.7%, 100.0%]** | 100.0% |
-| **Citation Grounding Rate (CGR)** | 62.5% [38.6%, 81.5%] | **100.0% [86.7%, 100.0%]** | 100.0% |
-| **Sentence Verification Rate (SVR)** | 54.2% [35.1%, 72.1%] | **100.0% [86.7%, 100.0%]** | 100.0% |
-| **Refusal Recall (False-Premise Traps)** | 20.0% [5.7%, 51.0%] | **100.0% [72.2%, 100.0%]** | $\ge 90.0\%$ |
-| **Refusal Precision** | 66.7% [30.0%, 90.3%] | **100.0% [72.2%, 100.0%]** | 100.0% |
-| **Answer Support (AS)** | 73.3% [48.1%, 89.1%] | **100.0% [79.6%, 100.0%]** | $\ge 80.0\%$ |
-
-*All metrics reported with Wilson score 95% confidence intervals ($z = 1.96$).*
+- **Archaeology Parser (`gitlog.py`)**:
+  Streams git commit graphs in a single pass using ASCII `0x1e`/`0x1f` delimiters. Secondary pass extracts up to 20 unified diff hunk headers (`@@ ... @@`) per commit to give the model precise function-level context.
+- **Honesty Verifier (`verify.py`)**:
+  Employs Sentinel Boundary hardening (`BRACKETED_HASH_RE = r"\[([0-9a-f]{7,40})\](?![a-fA-F0-9])"`). Peels hashes through git commit object resolution (`^{commit}`), foiling object-type injection attacks (trees, blobs, or annotated tags).
+- **Pluggable Backends (`backends/`)**:
+  - `unsloth`: Local 4-bit quantized Qwen3-4B on consumer NVIDIA GPUs.
+  - `openai_compat`: Connects to local Ollama/llama.cpp instances or OpenAI endpoints via `GHOST_BASE_URL`.
+  - `mock`: Deterministic 8-mode test harness (`honest`, `hallucinate`, `ungrounded`, `bare_hex`, `uncited`, `retry_repair`, `retry_fail`, `refuse`) for hermetic offline testing.
+- **Candlelit Archive Web UI (`web/`)**:
+  Tactile, quiet archival aesthetic built with OKLCH color tokens, Fraunces variable serif voice, JetBrains Mono evidence tags, Inter system UI, 10 distinct interactive states, bidirectional chip-to-evidence hover highlighting, and full WCAG AA accessibility.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Quickstart Guide
 
-### Prerequisites
-- Python 3.12 (managed via [`uv`](https://github.com/astral-sh/uv))
-- Git installed on system path
-- Node.js >= 18 (for building the Web UI)
+### Step 1: Install with UV
 
-### 1. Installation
+Clone the repository and sync pinned dependencies with `uv`:
 
 ```bash
-# Clone the repository
 git clone https://github.com/your-username/ghost-maintainer.git
 cd ghost-maintainer
-
-# Install dependencies with uv
 uv sync --all-extras
-
-# Build the Web UI production bundle
-cd web && npm install && npm run build && cd ..
 ```
 
-### 2. Verify Your Environment
+### Step 2: Run Diagnostics
+
+Verify Python version, git binary, and GPU/backend availability:
 
 ```bash
 uv run ghost doctor
 ```
 
-Output:
-```
-Ghost Maintainer Doctor Diagnostics
-  Python Version    : 3.12.x (OK)
-  Git Executable    : C:\Program Files\Git\bin\git.exe (version 2.4x.x)
-  PyTorch Available : Yes
-  CUDA Available    : Yes (NVIDIA GeForce GTX 1650, 4.00 GB)
-  Cache Directory   : C:\Users\...\.ghost
-```
+### Step 3: Ingest a Repository
 
----
+Ingest and index commit history into the isolated local cache:
 
-## 💻 CLI Commands
-
-### Summon a Repository
-Indexes commit history, author timelines, and function diff hunks into the local cache:
 ```bash
-# Local repository
-uv run ghost summon /path/to/my-repo
-
-# Remote GitHub repository
+# Ingest abandoned repository (remote or local clone)
 uv run ghost summon https://github.com/request/request.git
 ```
 
-### Ask a Single Question
-Query the ghost maintainers directly from your terminal:
+### Step 4: Ask a Historical Inquiry
+
+Query departed maintainers directly from the command line:
+
 ```bash
-uv run ghost ask "Why was request deprecated?" --repo /path/to/repo
+uv run ghost ask "Why did request switch test coverage tool from istanbul to nyc?"
 ```
 
-To view raw unverified model output (bypassing the verifier for benchmarking):
+### Step 5: Interactive Terminal Séance
+
+Launch an interactive multi-turn exploration session:
+
 ```bash
-uv run ghost ask "Why was request deprecated?" --raw
+uv run ghost seance
 ```
 
-### Interactive Séance REPL
-Enter an interactive terminal séance session with history inspection:
-```bash
-uv run ghost seance --repo /path/to/repo
-```
-*Special REPL commands:*
-- `:evidence` — Display retrieved commit chunks and BM25 scores for the last query.
-- `:commit <sha>` — Inspect commit author, date, message, and unified diff hunks.
-- `:stats` — View total commits, indexed authors, and cache path.
-- `:help` / `:exit` — View help or terminate the session.
+*Interactive Séance REPL Commands:*
+- `/evidence` — Toggle retrieved evidence card display.
+- `/backend <name>` — Switch active backend (`mock`, `openai_compat`, `unsloth`).
+- `/mode [raw|guarded]` — Toggle guarded honesty remediation.
+- `/clear` — Clear console screen.
+- `/exit` / `/quit` — End the séance.
+- `/help` — Display command help.
 
-### Run Honesty Benchmark
-Evaluate a dataset of questions with Wilson confidence intervals:
-```bash
-uv run ghost eval evals/request.yaml --repo /path/to/repo
-```
+### Step 6: Launch Web Interface
 
-### Launch Web Server
-Start the FastAPI streaming server and explore via the Candlelit Archive UI:
+Launch the FastAPI SSE server and open the Candlelit Archive UI:
+
 ```bash
-uv run ghost serve --port 8000
+uv run ghost serve --port 6660
 ```
-Open your browser to `http://localhost:8000`.
+Navigate to `http://localhost:6660` in your browser.
 
 ---
 
-## 📚 Documentation
+## 💻 CLI Command Reference
 
-- [System Architecture](docs/architecture.md): Deep dive into git streaming, BM25 indexing, and caching guarantees.
-- [Honesty Pipeline & Threat Models](docs/honesty.md): Sentence tokenization evasion, commit peeling, and mathematical formulas for Wilson confidence intervals.
-- [Design System & HIG](docs/design.md): Apple-grade UX, OKLCH perceptual tokens, typography choices, and accessibility compliance.
-- [Hacktoberfest Submission Checklist](submission/checklist.md): Comprehensive pre-submission audit.
-- [DEV Post Draft](submission/dev-post-draft.md): Publication-ready article for Hacktoberfest 2026 Week 4.
+| Command | Arguments / Flags | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `summon` | `<path-or-url>` | Clones (if remote) and indexes a git repository into `~/.ghost/<repo-hash>/`. | `uv run ghost summon ./my-repo` |
+| `ask` | `"<question>"`<br>`[--repo <path>]`<br>`[--k 8]`<br>`[--raw]`<br>`[--backend <name>]`<br>`[--json]` | Asks a single question. Emits colorized Rich verdict chips, cited commits, and evidence summary. | `uv run ghost ask "Why was Node 4 dropped?"` |
+| `seance` | `[--repo <path>]`<br>`[--backend <name>]` | Interactive multi-turn terminal REPL session with history and commit inspection. | `uv run ghost seance` |
+| `serve` | `[--host 127.0.0.1]`<br>`[--port 6660]`<br>`[--repo <path>]` | Starts the FastAPI server with typed SSE endpoints and static Web UI hosting. | `uv run ghost serve --port 6660` |
+| `eval` | `<yaml-benchmark>`<br>`[--repo <path>]`<br>`[--modes raw,guarded]`<br>`[--backend <name>]` | Executes the honesty benchmark across test datasets and outputs Wilson CIs in JSON/MD. | `uv run ghost eval evals/request.yaml` |
+| `doctor` | *(none)* | Runs environment diagnostics for Python, PyTorch, CUDA, Git, and storage. | `uv run ghost doctor` |
 
 ---
 
-## 🧪 Testing & Verification
+## ⚡ FastAPI SSE Server Reference
 
-Run the comprehensive test suite (unit, integration, and adversarial fuzz tests):
+The backend exposes a high-performance, typed asynchronous Server-Sent Events (SSE) API:
+
+| Method | Endpoint | Payload / Params | SSE Event Types | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/api/summon` | `{"path": str}` | *(JSON response)* | Ingests and indexes repository; returns synchronous JSON `SummonResponse`. |
+| `GET` | `/api/repos` | *(none)* | *(JSON response)* | Lists indexed repositories and active commit counts. |
+| `GET` | `/api/ask` | `?q=<str>&repo=<str>&mode=guarded` | `evidence`, `token`, `reconsidering`, `verdict`, `done`, `error` | Streams answer tokens, retry alerts, and sentence verification verdicts. |
+| `GET` | `/api/commit/{sha}` | `?repo=<str>` | *(JSON response)* | Fetches commit author, date, message, and unified diff hunks. |
+| `GET` | `/` | *(none)* | *(HTML)* | Serves pre-built Vite React application with SPA routing. |
+
+---
+
+## 📊 Honesty Benchmark Results (`request/request`, N=25)
+
+The benchmark evaluates 25 curated questions on [`request/request`](https://github.com/request/request) (15 historical inquiries with validated gold commits, 10 unanswerable false-premise traps):
+
+| Metric | Raw Unfiltered Mode | Guarded Honesty Pipeline | Target Standard | Verification Rule |
+| :--- | :---: | :---: | :---: | :--- |
+| **Citation Existence Rate (CER)** | 71.4% [45.4%, 88.3%] | **100.0%** [86.7%, 100.0%] | `100.0%` | `git cat-file -e <sha>^{commit}` == 0 |
+| **Citation Grounding Rate (CGR)** | 62.5% [38.6%, 81.5%] | **100.0%** [86.7%, 100.0%] | `100.0%` | Hash in retrieved $\{E_1..E_k\}$ |
+| **Sentence Verification Rate (SVR)** | 54.2% [35.1%, 72.1%] | **100.0%** [86.7%, 100.0%] | `100.0%` | Every factual sentence verified |
+| **Refusal Recall (RR)** | 20.0% [5.7%, 51.0%] | **100.0%** [72.2%, 100.0%] | $\ge 90.0\%$ | Refuses all 10 unanswerable traps |
+| **Refusal Precision (RP)** | 66.7% [30.0%, 90.3%] | **100.0%** [72.2%, 100.0%] | `100.0%` | Never refuses valid historical queries |
+| **Answer Support (AS)** | 73.3% [48.1%, 89.1%] | **100.0%** [79.6%, 100.0%] | $\ge 80.0\%$ | Cites verified gold commit reference |
+
+*Note: All bounds are Wilson score 95% confidence intervals ($z = 1.95996$). Due to finite sample sizes, reporting confidence interval bounds ensures rigorous transparency without misleading point estimates.*
+
+### Independent Benchmark Validation Commands
 
 ```bash
-# Pytest suite
-uv run pytest -v
+# 1. Execute full honesty benchmark
+uv run ghost eval evals/request.yaml --repo .eval_repos/request
 
-# Static typing check
-uv run mypy src
+# 2. Validate evaluation benchmark gold commits against git history (30/30 verified)
+uv run python scripts/validate_eval.py --eval-file evals/request.yaml --repo .eval_repos/request
 
-# Code linting & formatting check
+# 3. Independently audit citations in generated reports (JSON or Markdown)
+uv run python scripts/verify_citations.py reports/latest.json --repo .eval_repos/request
+uv run python scripts/verify_citations.py reports/latest.md --repo .eval_repos/request
+```
+
+---
+
+## ⚙️ Configuration & Environment Variables
+
+All settings are managed via `pydantic-settings` and can be overridden via `.env` or system environment variables:
+
+| Variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `GHOST_CACHE_DIR` | `Path` | `~/.ghost` | Base directory for BM25 indices and repository metadata. |
+| `GHOST_MIN_SCORE` | `float` | `0.8` | Retrieval gate threshold; scores below trigger immediate refusal. |
+| `GHOST_BACKEND` | `str` | `unsloth` | Inference backend: `unsloth`, `openai_compat`, or `mock`. |
+| `GHOST_BASE_URL` | `str` | `http://localhost:11434/v1` | Endpoint URL for `openai_compat` (Ollama, llama.cpp, or vLLM). |
+| `GHOST_OPENAI_MODEL`| `str` | `gpt-6-luna` | Model identifier for OpenAI-compatible providers. |
+| `OPENAI_API_KEY` | `str` | `None` | API key when targeting OpenAI or authorized endpoints. |
+| `GHOST_HOST` | `str` | `127.0.0.1` | Bind host address for `ghost serve`. |
+| `GHOST_PORT` | `int` | `6660` | Bind port number for `ghost serve`. |
+
+---
+
+## 🧪 Testing & Code Quality
+
+The codebase enforces strict static analysis, complete typing, and >= 85% statement coverage:
+
+```bash
+# Linting & code formatting
 uv run ruff check .
 uv run ruff format --check .
 
-# Validate evaluation YAML gold commits against git history
-uv run python scripts/validate_eval.py --yaml evals/request.yaml --repo /path/to/repo
+# Strict type checking
+uv run mypy src
 
-# Audit citations in generated evaluation reports
-uv run python scripts/verify_citations.py reports/latest.json --repo /path/to/repo
+# Hermetic test suite with coverage
+uv run pytest -v --cov=src/ghost_maintainer --cov-report=term-missing
+
+# Web UI linting and production build
+cd web && npm run lint && npm run build && cd ..
 ```
 
 ---
 
-## 🤝 Contributing
+## 🤝 Open Source & Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
+We welcome contributions to The Ghost Maintainer! Please review:
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Code contribution workflows and development setup.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1 code of conduct.
+- [SECURITY.md](SECURITY.md) — Responsible disclosure policy for honesty pipeline bypasses.
+- [CHANGELOG.md](CHANGELOG.md) — Release notes and milestone history.
 
-To report security vulnerabilities or honesty bypasses, please consult our [Security Policy](SECURITY.md).
+### Hacktoberfest 2026 Submission Kit
+- **Challenge Track**: *Ghost in the Machine* (Hacktoberfest 2026 Week 4)
+- [submission/dev-post-draft.md](submission/dev-post-draft.md) — Official publication-ready DEV post draft (`ai_disclosure_level: some_ai`).
+- [submission/checklist.md](submission/checklist.md) — Complete 5-category submission audit matrix.
+- [docs/architecture.md](docs/architecture.md) — In-depth architectural design notes.
+- [docs/honesty.md](docs/honesty.md) — Mathematical formulation and threat models.
+- [docs/design.md](docs/design.md) — Apple-grade design system and OKLCH token specs.
 
 ---
 
 ## 📜 License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the terms of the [MIT License](LICENSE).

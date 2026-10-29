@@ -44,8 +44,12 @@ def validate_eval_yaml(yaml_path: Path, repo_path: Path) -> bool:
         console.print(f"[red]Error:[/red] Target repository not found: {repo_path}")
         return False
 
-    with open(yaml_path, encoding="utf-8") as f:
-        data: Any = yaml.safe_load(f)
+    try:
+        with open(yaml_path, encoding="utf-8") as f:
+            data: Any = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        console.print(f"[red]Error:[/red] Invalid YAML syntax in {yaml_path}: {exc}")
+        return False
 
     questions = data.get("questions", []) if isinstance(data, dict) else data
     if not questions:

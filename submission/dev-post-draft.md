@@ -194,7 +194,7 @@ uv run ghost summon https://github.com/request/request.git
 uv run ghost ask "Why did request switch test coverage tool to nyc?"
 
 # 6. Launch the interactive Candlelit Archive Web UI
-uv run ghost serve --port 8000
+uv run ghost serve --port 6660
 ```
 
 ---

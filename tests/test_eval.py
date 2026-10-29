@@ -47,6 +47,28 @@ def test_wilson_interval_standard_properties() -> None:
     assert w_zero.upper < 0.35
 
 
+def test_wilson_interval_boundary_invariants() -> None:
+    """Wilson interval bounds must strictly satisfy 0.0 <= lower <= point <= upper <= 1.0 across sweep."""
+    w100 = wilson_score_interval(100, 100)
+    assert w100.point == 1.0
+    assert w100.upper == 1.0
+    assert 0.0 <= w100.lower <= w100.point <= w100.upper <= 1.0
+
+    w500 = wilson_score_interval(0, 500)
+    assert w500.point == 0.0
+    assert w500.lower == 0.0
+    assert 0.0 <= w500.lower <= w500.point <= w500.upper <= 1.0
+
+    for total in [0, 1, 2, 5, 10, 50, 100, 500, 1000, 100000]:
+        candidates = {0, 1, total // 2, max(0, total - 1), total} if total > 0 else {0}
+        for s in candidates:
+            if 0 <= s <= total:
+                w = wilson_score_interval(s, total)
+                assert 0.0 <= w.lower <= w.point <= w.upper <= 1.0, (
+                    f"Failed for s={s}, t={total}: {w}"
+                )
+
+
 def test_load_eval_questions_dict(tmp_path: Path) -> None:
     """Load evaluation questions from a dictionary YAML."""
     yaml_file = tmp_path / "questions.yaml"
@@ -120,6 +142,24 @@ questions:
         "aded7e4f8e57f6f33cf39d65634bfb822bfcb2c8",
         "aded7e4",
     ]
+
+
+def test_load_eval_questions_whitespace_gold(tmp_path: Path) -> None:
+    """Whitespace-only string in gold/gold_commits is filtered to empty list."""
+    yaml_file = tmp_path / "whitespace_gold.yaml"
+    yaml_file.write_text(
+        """
+questions:
+  - id: q01
+    q: "Whitespace gold test"
+    answerable: true
+    gold_commits: "   "
+""",
+        encoding="utf-8",
+    )
+    qs = load_eval_questions(yaml_file)
+    assert len(qs) == 1
+    assert qs[0].gold == []
 
 
 def test_load_eval_questions_invalid(tmp_path: Path) -> None:

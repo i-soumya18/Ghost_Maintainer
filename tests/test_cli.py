@@ -394,6 +394,16 @@ def test_cli_eval_success(synthetic_repo: Path, tmp_path: Path) -> None:
     yaml_file = tmp_path / "test_eval.yaml"
     yaml_file.write_text("- question: Why was request deprecated?\n", encoding="utf-8")
 
-    res = runner.invoke(app, ["eval", str(yaml_file), "--repo", str(synthetic_repo)])
+    res = runner.invoke(
+        app,
+        [
+            "eval",
+            str(yaml_file),
+            "--repo",
+            str(synthetic_repo),
+            "--output-dir",
+            str(tmp_path / "reports"),
+        ],
+    )
     assert res.exit_code == 0
     assert "Honesty Benchmark" in res.stdout

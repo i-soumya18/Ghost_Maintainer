@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,7 +29,16 @@ from ghost_maintainer.index import index_repo
 from ghost_maintainer.seance import Seance, TokenEvent, VerdictEvent
 from ghost_maintainer.verify import CitationVerdict, SentenceVerdict, VerificationResult
 
-console = Console()
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+console = Console(safe_box=True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,8 +92,8 @@ def wilson_score_interval(
     center = p_hat + (z**2) / (2.0 * total)
     margin = z * math.sqrt((p_hat * (1.0 - p_hat) / total) + (z**2) / (4.0 * (total**2)))
 
-    lower = max(0.0, (center - margin) / denom)
-    upper = min(1.0, (center + margin) / denom)
+    lower = min(p_hat, max(0.0, (center - margin) / denom))
+    upper = max(p_hat, min(1.0, (center + margin) / denom))
 
     return WilsonInterval(
         point=p_hat,
@@ -131,7 +141,7 @@ def load_eval_questions(yaml_path: Path | str) -> list[EvalQuestion]:
         ans = bool(item.get("answerable", True))
         raw_gold = item.get("gold") or item.get("gold_commits") or []
         if isinstance(raw_gold, str):
-            gold_list = [raw_gold.strip().lower()]
+            gold_list = [raw_gold.strip().lower()] if raw_gold.strip() else []
         elif isinstance(raw_gold, list):
             gold_list = [str(g).strip().lower() for g in raw_gold if str(g).strip()]
         else:
@@ -255,7 +265,7 @@ def evaluate_question(
 
         for g in question.gold:
             g_clean = g.lower()
-            if any(s.startswith(g_clean) or g_clean.startswith(s) for s in cited_shas):
+            if g_clean and any(s.startswith(g_clean) or g_clean.startswith(s) for s in cited_shas):
                 cited_gold = True
                 break
 

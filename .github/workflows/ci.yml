@@ -71,3 +71,7 @@ jobs:
       - name: Build web production bundle
         working-directory: ./web
         run: npm run build
+
+      - name: Run frontend tests
+        working-directory: ./web
+        run: npm test

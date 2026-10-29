@@ -99,6 +99,47 @@ Target Git Repository (Strictly Read-Only)
 
 ---
 
+## 📂 Repository Organization
+
+```text
+ghost-maintainer/
+├── src/ghost_maintainer/      # Core archaeological & honesty package
+│   ├── backends/              # Polymorphic LLM backends (unsloth, openai_compat, mock)
+│   ├── cli.py                 # Typer + Rich command-line interface
+│   ├── config.py              # Pydantic settings & environment configuration
+│   ├── eval.py                # Honesty evaluation engine with Wilson intervals
+│   ├── gitlog.py              # Streaming git commit graph & hunk extractor
+│   ├── index.py               # Field-boosted BM25 indexer & cache isolation
+│   ├── prompt.py              # Cite-or-stay-silent system prompt templates
+│   ├── retrieve.py            # Lexical evidence ranking & retrieval gating
+│   ├── seance.py              # 3-stage honesty pipeline & seance orchestrator
+│   ├── server.py              # Localhost FastAPI SSE server
+│   └── verify.py              # Post-generation sentence & citation verifier
+├── web/                       # Candlelit Archive Web UI (React + TS + Vite) [see web/README.md]
+│   ├── src/components/        # UI components (SeanceScreen, EvidenceRail, VoiceMessage, etc.)
+│   ├── src/styles/tokens.css  # Apple-grade OKLCH design tokens
+│   └── dist/                  # Built production bundle (served at /)
+├── docs/                      # Architectural & design documentation [see docs/README.md]
+│   ├── architecture.md        # End-to-end system architecture & streaming pipeline
+│   ├── honesty.md             # Threat models & mathematical metric definitions
+│   └── design.md              # Apple-grade design system & UX specifications
+├── evals/                     # Benchmark datasets [see evals/README.md]
+│   └── request.yaml           # 25 curated questions for request/request (15 ans, 10 traps)
+├── scripts/                   # Auditing & verification utilities [see scripts/README.md]
+│   ├── validate_eval.py       # Validates gold commits in eval YAML against git history
+│   └── verify_citations.py    # Independently audits citations in generated reports
+├── tests/                     # Hermetic unit & adversarial test suites [see tests/README.md]
+│   ├── conftest.py            # Hermetic synthetic git fixtures
+│   ├── test_*.py              # 320+ Python tests (95% statement coverage)
+│   └── *.mjs                  # Node.js tests for web SSE resilience & accessibility
+├── reports/                   # Generated evaluation benchmark reports (latest.json, latest.md)
+└── submission/                # Hacktoberfest 2026 Week 4 Kit [see submission/README.md]
+    ├── dev-post-draft.md      # Publication-ready DEV.to challenge submission draft
+    └── checklist.md           # 5-tier submission audit matrix
+```
+
+---
+
 ## 🚀 Quickstart Guide
 
 ### Step 1: Install with UV

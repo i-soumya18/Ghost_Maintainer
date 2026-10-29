@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve as pathResolve, join } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const ROOT_DIR = pathResolve(__dirname, '..');
+const resolve = (...p) => pathResolve(ROOT_DIR, ...p);
 
 // ---------------------------------------------------------------------------
 // 1. SSE Stream Parser Resilience Tests

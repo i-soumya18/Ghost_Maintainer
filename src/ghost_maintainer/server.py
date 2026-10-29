@@ -127,12 +127,53 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
     # Summon endpoint
     @application.post("/api/summon", response_model=SummonResponse)
     def summon(req: SummonRequest) -> SummonResponse:
-        target_path = Path(req.path).resolve()
-        if not target_path.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"Directory '{req.path}' does not exist.",
-            )
+        path_str = req.path.strip()
+        is_url = path_str.startswith(("http://", "https://", "git@", "ssh://")) or (
+            path_str.endswith(".git") and not Path(path_str).exists()
+        )
+
+        bundled_request = Path(__file__).parents[2] / ".eval_repos" / "request"
+        # Fast-path for the bundled request benchmark repository
+        if (
+            "request/request" in path_str
+            or path_str.rstrip("/").endswith("/request")
+            or path_str == "request"
+        ) and bundled_request.exists():
+            target_path = bundled_request.resolve()
+        elif is_url:
+            clone_key = get_repo_cache_key(path_str)
+            clone_dir = settings.cache_dir / "clones" / clone_key
+            clone_dir.parent.mkdir(parents=True, exist_ok=True)
+            if not clone_dir.exists() or req.force:
+                res = subprocess.run(
+                    ["git", "clone", path_str, str(clone_dir)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if res.returncode != 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Error cloning repository '{path_str}': {res.stderr.strip()}",
+                    )
+            target_path = clone_dir
+        else:
+            p = Path(path_str)
+            if p.exists():
+                target_path = p.resolve()
+            else:
+                project_root = Path(__file__).parents[2]
+                alt = (project_root / path_str).resolve()
+                eval_alt = (project_root / ".eval_repos" / path_str).resolve()
+                if alt.exists():
+                    target_path = alt
+                elif eval_alt.exists():
+                    target_path = eval_alt
+                else:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Directory '{req.path}' does not exist.",
+                    )
 
         try:
             check_git_repo(target_path)
@@ -178,6 +219,8 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
                     try:
                         data = json.loads(meta_file.read_text(encoding="utf-8"))
                         repo_path_str = data.get("repo_path", "")
+                        if not repo_path_str or not Path(repo_path_str).exists():
+                            continue
                         name = Path(repo_path_str).name if repo_path_str else item.name
                         summaries.append(
                             RepoSummary(

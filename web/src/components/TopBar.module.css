@@ -1,0 +1,11 @@
+.topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);background-color:var(--color-bg);border-bottom:1px solid var(--color-border);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.inner{display:flex;align-items:center;gap:1rem;height:100%;padding:0 var(--pad-page);max-width:calc(var(--col-main-w) + var(--rail-w) + var(--gap-layout) * 3);margin:0 auto}
+.brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.brandGlyph{color:var(--color-accent);font-size:1.1rem;animation:candleFlicker var(--motion-flicker) ease-in-out infinite;display:inline-block}
+.brandName{font-family:var(--font-ui);font-size:var(--text-sm);font-weight:600;color:var(--color-text-muted);letter-spacing:.04em;text-transform:uppercase}
+.repoInfo{display:flex;align-items:center;gap:.75rem;flex:1;min-width:0;padding-left:1rem;border-left:1px solid var(--color-border)}
+.repoPath{font-family:var(--font-evidence);font-size:var(--text-sm);color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+.commitCount{font-family:var(--font-ui);font-size:var(--text-xs);color:var(--color-text-muted);white-space:nowrap;flex-shrink:0}
+.changeBtn{flex-shrink:0;font-family:var(--font-ui);font-size:var(--text-xs);color:var(--color-text-muted);background:transparent;border:1px solid var(--color-border);border-radius:var(--radius-btn);padding:.25rem .75rem;cursor:pointer;transition:color var(--duration-fast) var(--ease-standard),border-color var(--duration-fast) var(--ease-standard)}
+.changeBtn:hover,.changeBtn:focus-visible{color:var(--color-accent);border-color:var(--color-accent)}
+@keyframes candleFlicker{0%,to{opacity:1}30%{opacity:.85}60%{opacity:.95}80%{opacity:.8}}

@@ -1,0 +1,9 @@
+.container{display:flex;flex-direction:column;align-items:center;justify-content:center;max-width:480px;margin:64px auto;padding:36px 32px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-card);text-align:center;box-shadow:0 12px 32px #0006}
+.candleIcon{font-size:2.6rem;margin-bottom:16px;animation:flicker var(--motion-flicker) infinite alternate}
+.title{font-family:var(--font-voice);font-size:1.45rem;font-weight:600;color:var(--color-text);margin:0 0 8px}
+.subtitle{font-family:var(--font-ui);font-size:.9rem;color:var(--color-text-muted);margin:0 0 24px;line-height:1.45}
+.subtitle strong{color:var(--color-accent)}
+.progressTrack{width:100%;height:6px;background:#ffffff14;border-radius:999px;overflow:hidden;margin-bottom:12px;position:relative}
+.progressBar{height:100%;background:linear-gradient(90deg,var(--color-accent),#f0b040);border-radius:999px;transition:width .3s ease;box-shadow:0 0 8px #dca03280}
+.counts{width:100%;display:flex;justify-content:space-between;font-family:var(--font-evidence);font-size:.8rem;color:var(--color-text-muted)}
+@keyframes flicker{0%{transform:scale(.98);opacity:.8}50%{transform:scale(1.04);opacity:1;filter:drop-shadow(0 0 8px rgba(220,160,50,.8))}to{transform:scale(1);opacity:.9}}

@@ -1,0 +1,47 @@
+name: 👻 Haunting Report (Honesty / Citation Bug)
+description: Report a hallucinated commit citation, evasion vector, or ungrounded claim that slipped past the verifier
+title: "[HAUNTING]: "
+labels: ["honesty-bug", "adversarial"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ghost Maintainer operates under an uncompromising principle: **Every claim must cite a real commit hash from repository history, or the ghost must say "The dead do not remember."**
+
+        If the model invented history or fabricated a hash that was not caught and stripped, file this report immediately.
+  - type: input
+    id: repository
+    attributes:
+      label: Repository Analyzed
+      description: URL or name of the target repository (e.g. `request/request`).
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: User Question / Query
+      description: The exact question you asked the ghost.
+      placeholder: "e.g. Why was the auth module rewritten?"
+    validations:
+      required: true
+  - type: textarea
+    id: ghost-response
+    attributes:
+      label: Model's Response
+      description: The exact output produced by the ghost.
+    validations:
+      required: true
+  - type: textarea
+    id: ungrounded-claim
+    attributes:
+      label: Hallucinated / Ungrounded Elements
+      description: Which commit hashes did not exist in git history (`git cat-file -e`), or which claims lacked ground-truth evidence?
+    validations:
+      required: true
+  - type: input
+    id: backend-used
+    attributes:
+      label: Backend & Model
+      description: Model name and backend used (e.g. `unsloth/Qwen3-4B-Instruct-2507-bnb-4bit` or `gpt-6-luna`).
+    validations:
+      required: true

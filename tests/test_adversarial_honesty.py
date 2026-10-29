@@ -11,23 +11,15 @@ Covers:
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-import pytest
-
-from ghost_maintainer.backends import MockBackend, MockMode
+from ghost_maintainer.backends import MockBackend
 from ghost_maintainer.config import GHOST_DISCLAIMER, GHOST_REFUSAL_MESSAGE
 from ghost_maintainer.gitlog import Commit, FileChange
-from ghost_maintainer.index import CommitStore
 from ghost_maintainer.retrieve import Evidence, retrieve
 from ghost_maintainer.seance import (
     DoneEvent,
-    ErrorEvent,
-    EvidenceEvent,
     ReconsideringEvent,
-    Seance,
-    TokenEvent,
     VerdictEvent,
     ask,
     extract_answer_from_events,
@@ -40,7 +32,6 @@ from ghost_maintainer.verify import (
     split_sentences,
     verify,
 )
-
 
 # ==============================================================================
 # Category 1: Malicious or Deceptive Citations
@@ -66,9 +57,9 @@ def test_adversarial_citation_invalid_hex_hashes(synthetic_repo: Path) -> None:
 
         assert res.is_fully_verified is False, f"Fake hash [{fake_hash}] was falsely verified"
         assert len(res.violations) >= 1
-        assert any(
-            "does not exist in repository history" in v for v in res.violations
-        ), f"Missing existence violation for [{fake_hash}]"
+        assert any("does not exist in repository history" in v for v in res.violations), (
+            f"Missing existence violation for [{fake_hash}]"
+        )
         assert res.sentences[0].status == "unverified"
         assert res.sentences[0].citations[0].exists is False
         assert res.sentences[0].citations[0].grounded is False
@@ -270,7 +261,9 @@ def test_adversarial_bare_hex_unbracketed_narrative(synthetic_repo: Path) -> Non
     res_real = verify(text_real, evidence, repo_path=synthetic_repo)
     assert res_real.is_fully_verified is False
     assert res_real.sentences[0].status == "unverified"
-    assert any(f"bare unbracketed commit hash '{top_sha.lower()}'" in v for v in res_real.violations)
+    assert any(
+        f"bare unbracketed commit hash '{top_sha.lower()}'" in v for v in res_real.violations
+    )
 
     # 3. Full 40-character bare SHA
     full_sha = evidence[0].commit.sha.lower()
@@ -344,7 +337,9 @@ def test_adversarial_seance_mixed_claims_partial_strip(synthetic_repo: Path) -> 
     top_sha = evidence[0].commit.short
 
     # Turn 0: mixed (1 verified + 1 uncited) -> triggers retry
-    turn0 = f"We deprecated request in [{top_sha}]. We also rebuilt the entire backend architecture."
+    turn0 = (
+        f"We deprecated request in [{top_sha}]. We also rebuilt the entire backend architecture."
+    )
     # Turn 1: still mixed -> guarded repair should strip the uncited claim
     turn1 = f"We removed the request dependency in [{top_sha}]. Maintainers also left the project."
 
@@ -630,11 +625,8 @@ def test_adversarial_support_hint_token_types_and_clamping() -> None:
 def test_vulnerability_proof_trailing_citation_evades_honesty_pipeline(
     synthetic_repo: Path,
 ) -> None:
-    """EMPIRICAL PROOF OF CRITICAL VULNERABILITY:
-    When a citation follows a terminal dot (e.g. 'Sentence 1. [hash] Sentence 2.'),
-    split_sentences fails to split after the citation because ']' is not in [.!?].
-    As a result, subsequent uncited claims, hallucinations, or entire paragraphs
-    are fused into the cited sentence and falsely evaluated as verified with zero violations!
+    """Remediated: Trailing citation followed by uncited claim must be split
+    and flagged as uncited, preventing verification evasion.
     """
     evidence = retrieve("deprecated request", synthetic_repo, k=3)
     top_sha = evidence[0].commit.short
@@ -645,23 +637,20 @@ def test_vulnerability_proof_trailing_citation_evades_honesty_pipeline(
         "We also completely rewrote the core engine in Rust and deleted all user records."
     )
 
-    # Observation 1: split_sentences fails to separate the uncited claim
+    # Observation 1: split_sentences separates the uncited claim into 2 sentences
     sentences = split_sentences(text)
-    assert len(sentences) == 1, (
-        f"Expected 1 fused sentence demonstrating the split failure, got {len(sentences)}"
+    assert len(sentences) == 2, (
+        f"Expected 2 split sentences separating the uncited claim, got {len(sentences)}"
     )
 
-    # Observation 2: verify() falsely marks the entire fabrication as fully verified!
+    # Observation 2: verify() flags the fabrication and does not mark as fully verified
     res = verify(text, evidence, repo_path=synthetic_repo)
-    assert res.is_fully_verified is True
-    assert len(res.violations) == 0
+    assert res.is_fully_verified is False
+    assert len(res.violations) >= 1
     assert res.sentences[0].status == "verified"
+    assert res.sentences[1].status == "uncited"
 
 
-@pytest.mark.xfail(
-    reason="VULNERABILITY: Trailing citation '. [hash]' must split subsequent uncited claims into separate sentences",
-    strict=True,
-)
 def test_contract_trailing_citation_must_not_evade_verification(
     synthetic_repo: Path,
 ) -> None:
@@ -682,21 +671,14 @@ def test_contract_trailing_citation_must_not_evade_verification(
 
 
 def test_vulnerability_proof_closing_quotes_prevent_sentence_splitting() -> None:
-    """EMPIRICAL PROOF OF VULNERABILITY:
-    Sentences ending with quotation marks (e.g. 'He said, "Never again." Next sentence.') fail to split
-    because split_pattern requires terminal punctuation to be immediately adjacent to whitespace.
-    """
+    """Remediated: Sentences ending with quotation marks must split at whitespace."""
     text = 'He said, "Never again." Next sentence followed here.'
     sentences = split_sentences(text)
-    # Bug: closing quote prevents splitting
-    assert len(sentences) == 1
-    assert sentences[0] == text
+    assert len(sentences) == 2
+    assert sentences[0] == 'He said, "Never again."'
+    assert sentences[1] == "Next sentence followed here."
 
 
-@pytest.mark.xfail(
-    reason="VULNERABILITY: Sentences ending with closing quotes or parens must be split at whitespace",
-    strict=True,
-)
 def test_contract_closing_quotes_must_split_sentences() -> None:
     """Contract test: Closing quotes with trailing whitespace must produce two sentences."""
     text = 'He said, "Never again." Next sentence followed here.'
@@ -704,23 +686,14 @@ def test_contract_closing_quotes_must_split_sentences() -> None:
     assert len(sentences) == 2
 
 
-
 def test_vulnerability_proof_abbreviation_case_mutation() -> None:
-    """EMPIRICAL PROOF OF VULNERABILITY:
-    split_sentences mutates capitalized abbreviations like 'Dept.', 'Mr.', 'Dr.', 'E.g.'
-    to lowercase because it substitutes mask_str(abbrev) rather than mask_str(match.group(0)).
-    """
+    """Remediated: split_sentences preserves capitalized abbreviations like 'Dept.'."""
     text = "Testing Dept. here [3f2a9c1]."
     sentences = split_sentences(text)
-    # Bug: 'Dept.' was mutated to 'dept.'
-    assert "dept." in sentences[0]
-    assert "Dept." not in sentences[0]
+    assert "Dept." in sentences[0]
+    assert "dept." not in sentences[0]
 
 
-@pytest.mark.xfail(
-    reason="VULNERABILITY: Abbreviations must preserve original case when unmasked",
-    strict=True,
-)
 def test_contract_abbreviation_case_must_be_preserved() -> None:
     """Contract test: Original capitalization of abbreviations must remain unaltered."""
     text = "Testing Dept. here [3f2a9c1]."
@@ -729,22 +702,14 @@ def test_contract_abbreviation_case_must_be_preserved() -> None:
 
 
 def test_vulnerability_proof_compute_support_hint_boilerplate_dead_code() -> None:
-    """EMPIRICAL PROOF OF VULNERABILITY:
-    compute_support_hint contains dead code for GHOST_DISCLAIMER and GHOST_REFUSAL_MESSAGE
-    because the check is nested inside 'if not sent_tokens:', but both strings contain non-stopword tokens.
-    """
+    """Remediated: compute_support_hint returns 1.0 for GHOST_DISCLAIMER and GHOST_REFUSAL_MESSAGE."""
     hint_disclaimer = compute_support_hint(GHOST_DISCLAIMER, [])
     hint_refusal = compute_support_hint(GHOST_REFUSAL_MESSAGE, [])
 
-    # Bug: returns 0.0 instead of 1.0
-    assert hint_disclaimer == 0.0
-    assert hint_refusal == 0.0
+    assert hint_disclaimer == 1.0
+    assert hint_refusal == 1.0
 
 
-@pytest.mark.xfail(
-    reason="VULNERABILITY: compute_support_hint must return 1.0 for boilerplate disclaimer and refusal strings",
-    strict=True,
-)
 def test_contract_compute_support_hint_boilerplate_exemption() -> None:
     """Contract test: Boilerplate disclaimer must return 1.0 in compute_support_hint directly."""
     assert compute_support_hint(GHOST_DISCLAIMER, []) == 1.0
@@ -752,24 +717,276 @@ def test_contract_compute_support_hint_boilerplate_exemption() -> None:
 
 
 def test_vulnerability_proof_quadruple_dot_fragmentation() -> None:
-    """EMPIRICAL PROOF OF VULNERABILITY:
-    Quadruple dots '....' are replaced by 3 sentinels leaving 1 dot unmasked,
-    which triggers premature sentence fragmentation on trailing whitespace.
-    """
+    """Remediated: Quadruple dots '....' are masked completely and do not fragment the sentence."""
     text = "Testing quadruple dots.... still valid [3f2a9c1]."
     sentences = split_sentences(text)
-    # Bug: fragments into 2 sentences instead of 1
-    assert len(sentences) == 2
-    assert sentences[0] == "Testing quadruple dots...."
-    assert sentences[1] == "still valid [3f2a9c1]."
+    assert len(sentences) == 1
+    assert sentences[0] == "Testing quadruple dots.... still valid [3f2a9c1]."
 
 
-@pytest.mark.xfail(
-    reason="VULNERABILITY: Quadruple dots '....' should not cause premature sentence fragmentation",
-    strict=True,
-)
 def test_contract_quadruple_dot_must_not_fragment() -> None:
     """Contract test: Quadruple dots should stay within a single sentence."""
     text = "Testing quadruple dots.... still valid [3f2a9c1]."
     sentences = split_sentences(text)
     assert len(sentences) == 1
+
+
+# ------------------------------------------------------------------------------
+# VULN-06: Delimited Multi-Citations Sentence Splitting (Comma / Semicolon Chains)
+# ------------------------------------------------------------------------------
+
+
+def test_vulnerability_proof_delimited_multi_citations(synthetic_repo: Path) -> None:
+    """Remediated (VULN-06): Multi-citations separated by commas or semicolons
+    must not suppress sentence splitting at boundary, catching uncited claims.
+    """
+    evidence = retrieve("auth", synthetic_repo, k=3)
+    assert len(evidence) >= 2
+    sha1 = evidence[0].commit.short
+    sha2 = evidence[1].commit.short
+
+    # Probe 1: Comma-delimited multi-citations
+    text_comma = (
+        f"We updated authentication logic. [{sha1}], [{sha2}] "
+        "We also rewrote everything in Rust and stole user tokens."
+    )
+    sentences_comma = split_sentences(text_comma)
+    assert len(sentences_comma) == 2, (
+        f"Expected 2 sentences for comma-delimited citations, got {len(sentences_comma)}"
+    )
+    assert sentences_comma[0] == f"We updated authentication logic. [{sha1}], [{sha2}]"
+    assert sentences_comma[1] == "We also rewrote everything in Rust and stole user tokens."
+
+    res_comma = verify(text_comma, evidence, repo_path=synthetic_repo)
+    assert res_comma.is_fully_verified is False
+    assert res_comma.sentences[0].status == "verified"
+    assert res_comma.sentences[1].status == "uncited"
+
+    # Probe 2: Semicolon-delimited multi-citations
+    text_semi = (
+        f"We updated authentication logic. [{sha1}]; [{sha2}] "
+        "We also rewrote everything in Rust and stole user tokens."
+    )
+    sentences_semi = split_sentences(text_semi)
+    assert len(sentences_semi) == 2, (
+        f"Expected 2 sentences for semicolon-delimited citations, got {len(sentences_semi)}"
+    )
+    assert sentences_semi[0] == f"We updated authentication logic. [{sha1}]; [{sha2}]"
+    assert sentences_semi[1] == "We also rewrote everything in Rust and stole user tokens."
+
+    res_semi = verify(text_semi, evidence, repo_path=synthetic_repo)
+    assert res_semi.is_fully_verified is False
+    assert res_semi.sentences[0].status == "verified"
+    assert res_semi.sentences[1].status == "uncited"
+
+
+def test_contract_delimited_multi_citations_must_split_cleanly() -> None:
+    """Contract test (VULN-06): Various delimiters between multiple citations must split cleanly."""
+    cites = "[3f2a9c1], [5e6f7a8]"
+    text = f"First claim verified. {cites} Second claim uncited."
+    sentences = split_sentences(text)
+    assert len(sentences) == 2
+    assert sentences[0] == f"First claim verified. {cites}"
+    assert sentences[1] == "Second claim uncited."
+
+    cites_semi = "[3f2a9c1]; [5e6f7a8]"
+    text_semi = f"First claim verified. {cites_semi} Second claim uncited."
+    sentences_semi = split_sentences(text_semi)
+    assert len(sentences_semi) == 2
+    assert sentences_semi[0] == f"First claim verified. {cites_semi}"
+    assert sentences_semi[1] == "Second claim uncited."
+
+
+# ------------------------------------------------------------------------------
+# VULN-07: Post-Citation Trailing Punctuation Sentence Splitting
+# ------------------------------------------------------------------------------
+
+
+def test_vulnerability_proof_post_citation_trailing_punctuation(
+    synthetic_repo: Path,
+) -> None:
+    """Remediated (VULN-07): Trailing punctuation directly attached to citations
+    ([sha],, [sha];, [sha]:, [sha]-) must not suppress sentence splitting.
+    """
+    evidence = retrieve("deprecated request", synthetic_repo, k=3)
+    sha = evidence[0].commit.short
+
+    punctuations = [",", ";", ":", "-"]
+    for punct in punctuations:
+        text = (
+            f"We deprecated request in 2019. [{sha}]{punct} "
+            "We also deleted all production customer records."
+        )
+        sentences = split_sentences(text)
+        assert len(sentences) == 2, (
+            f"Expected 2 sentences with trailing punctuation '{punct}', got {len(sentences)}"
+        )
+        assert sentences[0] == f"We deprecated request in 2019. [{sha}]"
+        assert sentences[1] == "We also deleted all production customer records."
+
+        res = verify(text, evidence, repo_path=synthetic_repo)
+        assert res.is_fully_verified is False
+        assert res.sentences[0].status == "verified"
+        assert res.sentences[1].status == "uncited"
+
+
+def test_contract_post_citation_trailing_punctuation_must_split_cleanly() -> None:
+    """Contract test (VULN-07): Punctuation after citations is trimmed and sentences split."""
+    for punct in [",", ";", ":", "-"]:
+        text = f"First statement. [3f2a9c1]{punct} Next statement follows."
+        sentences = split_sentences(text)
+        assert len(sentences) == 2, f"Failed to split for punct {punct}"
+        assert sentences[0] == "First statement. [3f2a9c1]"
+        assert sentences[1] == "Next statement follows."
+
+
+# ------------------------------------------------------------------------------
+# VULN-08: Closing Quote Wrapping Trailing Citation Sentence Splitting
+# ------------------------------------------------------------------------------
+
+
+def test_vulnerability_proof_closing_quotes_wrapping_citation(
+    synthetic_repo: Path,
+) -> None:
+    """Remediated (VULN-08): Closing quote wrapping a trailing citation
+    (\"Sentence. [sha]\") must split before the following sentence.
+    """
+    evidence = retrieve("deprecated request", synthetic_repo, k=3)
+    sha = evidence[0].commit.short
+
+    quote_styles = [
+        ('"', '"'),  # Double quotes
+        ("'", "'"),  # Single quotes
+        ("“", "”"),  # Curly quotes
+        ("‘", "’"),  # Single curly quotes
+        ("(", ")"),  # Parentheses wrapping sentence and cite
+    ]
+
+    for open_q, close_q in quote_styles:
+        text = (
+            f"{open_q}We deprecated request in 2019. [{sha}]{close_q} "
+            "We also deleted all production customer records."
+        )
+        sentences = split_sentences(text)
+        assert len(sentences) == 2, (
+            f"Expected 2 sentences for quote style {open_q}...{close_q}, got {len(sentences)}"
+        )
+        assert sentences[0] == f"{open_q}We deprecated request in 2019. [{sha}]{close_q}"
+        assert sentences[1] == "We also deleted all production customer records."
+
+        res = verify(text, evidence, repo_path=synthetic_repo)
+        assert res.is_fully_verified is False
+        assert res.sentences[0].status == "verified"
+        assert res.sentences[1].status == "uncited"
+
+
+def test_contract_closing_quotes_wrapping_citation_must_split() -> None:
+    """Contract test (VULN-08): Quotes wrapping citations maintain boundary isolation."""
+    text = '"We updated the configuration. [3f2a9c1]" We also deleted the database.'
+    sentences = split_sentences(text)
+    assert len(sentences) == 2
+    assert sentences[0] == '"We updated the configuration. [3f2a9c1]"'
+    assert sentences[1] == "We also deleted the database."
+
+
+# ------------------------------------------------------------------------------
+# VULN-09: Citations After Abbreviations Sentence Splitting
+# ------------------------------------------------------------------------------
+
+
+def test_vulnerability_proof_citations_after_abbreviations(
+    synthetic_repo: Path,
+) -> None:
+    """Remediated (VULN-09): Citations following masked abbreviations
+    (e.g., etc. [sha], al. [sha], dept. [sha]) must split before the next sentence.
+    """
+    evidence = retrieve("deprecated request", synthetic_repo, k=3)
+    sha = evidence[0].commit.short
+
+    abbrev_cases = [
+        (
+            f"We updated packages, configs, etc. [{sha}] We also deleted all customer records.",
+            f"We updated packages, configs, etc. [{sha}]",
+            "We also deleted all customer records.",
+        ),
+        (
+            f"We consulted the work of Smith et al. [{sha}] We also deleted all customer records.",
+            f"We consulted the work of Smith et al. [{sha}]",
+            "We also deleted all customer records.",
+        ),
+        (
+            f"Changes were signed off by the engineering dept. [{sha}] We also deleted all customer records.",
+            f"Changes were signed off by the engineering dept. [{sha}]",
+            "We also deleted all customer records.",
+        ),
+    ]
+
+    for text, expected_s0, expected_s1 in abbrev_cases:
+        sentences = split_sentences(text)
+        assert len(sentences) == 2, f"Expected 2 sentences for text '{text}', got {len(sentences)}"
+        assert sentences[0] == expected_s0
+        assert sentences[1] == expected_s1
+
+        res = verify(text, evidence, repo_path=synthetic_repo)
+        assert res.is_fully_verified is False
+        assert res.sentences[0].status == "verified"
+        assert res.sentences[1].status == "uncited"
+
+
+def test_contract_citations_after_abbreviations_must_split_cleanly() -> None:
+    """Contract test (VULN-09): Masked abbreviations with trailing citations preserve dots and split."""
+    text = "We configured routing, nginx, etc. [3f2a9c1] Next sentence here."
+    sentences = split_sentences(text)
+    assert len(sentences) == 2
+    assert sentences[0] == "We configured routing, nginx, etc. [3f2a9c1]"
+    assert sentences[1] == "Next sentence here."
+
+
+# ------------------------------------------------------------------------------
+# End-to-End Seance Guarded Pipeline Integration for VULN-06..09 Evasion Resistance
+# ------------------------------------------------------------------------------
+
+
+def test_adversarial_seance_guarded_evasion_resistance(synthetic_repo: Path) -> None:
+    """Verify Seance.ask in guarded mode intercepts evasion attempts (VULN-06..09),
+    triggers reconsideration, strips fabrications, and protects output honesty.
+    """
+    evidence = retrieve("deprecated request", synthetic_repo, k=3)
+    sha = evidence[0].commit.short
+
+    evasion_probes = [
+        # VULN-06: Comma chain
+        f"We deprecated request in 2019. [{sha}], [{sha}] We also deleted all production customer records.",
+        # VULN-07: Trailing comma
+        f"We deprecated request in 2019. [{sha}], We also deleted all production customer records.",
+        # VULN-08: Quote after cite
+        f'"We deprecated request in 2019. [{sha}]" We also deleted all production customer records.',
+        # VULN-09: Abbrev cite
+        f"We updated packages, configs, etc. [{sha}] We also deleted all production customer records.",
+    ]
+
+    for evasion_text in evasion_probes:
+        # Mock backend returns evasion text initially; on retry, returns honest verified response
+        honest_retry = f"We deprecated request in 2019 [{sha}].\n\n{GHOST_DISCLAIMER}"
+        mock = MockBackend(responses=[evasion_text, honest_retry])
+
+        events = list(
+            ask(
+                "Why was request deprecated?",
+                synthetic_repo,
+                mode="guarded",
+                backend=mock,
+            )
+        )
+        reconsidering_events = [e for e in events if isinstance(e, ReconsideringEvent)]
+        assert len(reconsidering_events) == 1, (
+            f"Expected 1 ReconsideringEvent for evasion text '{evasion_text}', got {len(reconsidering_events)}"
+        )
+        assert any(
+            "uncited" in v or "without citations" in v for v in reconsidering_events[0].violations
+        )
+
+        final_answer = extract_answer_from_events(events)
+        assert "deleted all production customer records" not in final_answer, (
+            f"Fabrication leaked into final answer: {final_answer}"
+        )

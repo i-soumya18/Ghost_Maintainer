@@ -43,6 +43,13 @@ ABBREVIATIONS: tuple[str, ...] = (
     "feat.",
 )
 
+BOILERPLATE_SENTENCES: tuple[str, ...] = (
+    GHOST_DISCLAIMER,
+    GHOST_REFUSAL_MESSAGE,
+    "Voices are fiction.",
+    "Evidence is real.",
+)
+
 # Stopwords set for lexical overlap
 _ENGLISH_STOPWORDS: frozenset[str] = frozenset(
     set(bm25s.stopwords.STOPWORDS_EN)
@@ -160,7 +167,7 @@ def split_sentences(text: str) -> list[str]:
         - File paths: lib/auth.js, README.md
         - Citations immediately trailing terminal punctuation: . [3f2a9c1]
     """
-    cleaned = text.strip()
+    cleaned = text.strip().replace("\r\n", "\n")
     if not cleaned:
         return []
 
@@ -168,6 +175,7 @@ def split_sentences(text: str) -> list[str]:
     SENTINEL_DOT = "\ue000"
     SENTINEL_EXCL = "\ue001"
     SENTINEL_QMARK = "\ue002"
+    SENTINEL_SPLIT = "\ue003"
 
     def mask_str(s: str) -> str:
         return s.replace(".", SENTINEL_DOT).replace("!", SENTINEL_EXCL).replace("?", SENTINEL_QMARK)
@@ -181,10 +189,10 @@ def split_sentences(text: str) -> list[str]:
 
     working = re.sub(r"`[^`]+`", replace_code_span, working)
 
-    # 3. Mask known abbreviations (case-insensitive)
+    # 3. Mask known abbreviations (case-insensitive, preserving original case)
     for abbrev in ABBREVIATIONS:
-        pattern = re.compile(re.escape(abbrev), re.IGNORECASE)
-        working = pattern.sub(mask_str(abbrev), working)
+        pattern = re.compile(r"\b" + re.escape(abbrev), re.IGNORECASE)
+        working = pattern.sub(lambda m: mask_str(m.group(0)), working)
 
     # 4. Mask dots flanked by alphanumeric characters (v1.2.3, auth.js, 3.14)
     working = re.sub(
@@ -193,18 +201,35 @@ def split_sentences(text: str) -> list[str]:
         working,
     )
 
-    # 5. Mask ellipses (...)
-    working = working.replace("...", f"{SENTINEL_DOT}{SENTINEL_DOT}{SENTINEL_DOT}")
+    # 5. Mask ellipses and arbitrary sequences of 3+ dots
+    working = re.sub(r"\.{3,}", lambda m: SENTINEL_DOT * len(m.group(0)), working)
 
-    # 5. Split sentences on terminal punctuation + whitespace,
-    # except when immediately followed by a citation like [3f2a9c1]
-    split_pattern = re.compile(r"(?<=[.!?])(?:\s+|\n+)(?![\[\(]?[0-9a-fA-F]{7,40}[\]\)])")
+    # 6. Mark trailing citations after terminal punctuation
+    # When citations immediately trail terminal punctuation (e.g. '. [hash]'),
+    # place a sentinel boundary marker so the sentence boundary falls after the citation.
+    trailing_cite_pattern = re.compile(
+        r'((?:(?<=[.!?\ue000])|(?<=[.!?\ue000]["\'”’\)]))\s*(?:\[[0-9a-fA-F]{7,40}\]|\([0-9a-fA-F]{7,40}\))(?:(?:,\s*|;\s*|\s*)(?:\[[0-9a-fA-F]{7,40}\]|\([0-9a-fA-F]{7,40}\)))*["\'”’\)]?)(?:[,;:\-]?)(?:\s+|\n+)'
+    )
+    working = trailing_cite_pattern.sub(r"\1" + SENTINEL_SPLIT + " ", working)
+
+    # 7. Split sentences on:
+    #    - terminal punctuation followed by whitespace (unless followed by citation)
+    #    - terminal punctuation + closing quote/paren followed by whitespace (unless followed by citation)
+    #    - sentinel split marker after trailing citations
+    split_pattern = re.compile(
+        r'(?:(?<=[.!?])|(?<=[.!?]["\'”’\)])|(?<=\ue003))(?:\s+|\n+)(?![\[\(]?[0-9a-fA-F]{7,40}[\]\)])'
+    )
 
     raw_sentences = split_pattern.split(working)
 
-    # 6. Unmask and clean
+    # 8. Unmask and clean
     def unmask_str(s: str) -> str:
-        return s.replace(SENTINEL_DOT, ".").replace(SENTINEL_EXCL, "!").replace(SENTINEL_QMARK, "?")
+        return (
+            s.replace(SENTINEL_DOT, ".")
+            .replace(SENTINEL_EXCL, "!")
+            .replace(SENTINEL_QMARK, "?")
+            .replace(SENTINEL_SPLIT, "")
+        )
 
     sentences: list[str] = []
     for s in raw_sentences:
@@ -336,6 +361,10 @@ def compute_support_hint(
     commits: Sequence[Commit],
 ) -> float:
     """Compute word overlap ratio between sentence text and referenced commit text."""
+    clean_text = sentence.strip()
+    if clean_text in BOILERPLATE_SENTENCES:
+        return 1.0
+
     # Clean citations out of sentence
     sentence_clean = BRACKETED_CITE_RE.sub(" ", sentence).lower()
     sent_tokens = {
@@ -345,14 +374,6 @@ def compute_support_hint(
     }
 
     if not sent_tokens:
-        clean_text = sentence.strip()
-        if clean_text in (
-            GHOST_DISCLAIMER,
-            GHOST_REFUSAL_MESSAGE,
-            "Voices are fiction.",
-            "Evidence is real.",
-        ):
-            return 1.0
         return 0.0
 
     if not commits:
@@ -402,12 +423,7 @@ def verify(
         s_clean = s_text.strip()
 
         # Check for boilerplate sentences
-        if s_clean in (
-            GHOST_DISCLAIMER,
-            GHOST_REFUSAL_MESSAGE,
-            "Voices are fiction.",
-            "Evidence is real.",
-        ):
+        if s_clean in BOILERPLATE_SENTENCES:
             sentence_verdicts.append(
                 SentenceVerdict(
                     text=s_clean,

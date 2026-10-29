@@ -1,0 +1,62 @@
+name: 🐛 Bug Report
+description: File a bug report for an unexpected error or crash in Ghost Maintainer
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please ensure your report provides actionable details.
+  - type: input
+    id: version
+    attributes:
+      label: Ghost Maintainer Version
+      description: What version or commit SHA of Ghost Maintainer are you running?
+      placeholder: "e.g. 0.1.0 or output of `ghost --version`"
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Inference Backend
+      description: Which inference backend were you using?
+      options:
+        - unsloth (local Qwen3-4B 4-bit)
+        - openai_compat (Ollama / llama.cpp / API)
+        - mock
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Include command line invocations or API requests.
+      placeholder: |
+        1. Run `ghost summon /path/to/repo`
+        2. Ask `ghost ask "Why was X changed?"`
+        3. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output or Stack Trace
+      description: Paste any error messages or tracebacks.
+      render: shell

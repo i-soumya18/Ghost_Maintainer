@@ -29,6 +29,8 @@ venv.bak/
 # --- Ghost Maintainer application caches & local state ---
 .ghost/
 *.ghost/
+.eval_repos/
+reports/
 
 # --- Machine Learning checkpoints, models & tracking ---
 checkpoints/

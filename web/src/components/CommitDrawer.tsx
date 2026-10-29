@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { CommitDetails } from '../types';
-import { fetchCommitDetails } from '../api';
+import { source } from '../source';
+import { Wick } from './Wick';
 import styles from './CommitDrawer.module.css';
 
 interface CommitDrawerProps {
@@ -29,7 +30,7 @@ export const CommitDrawer: React.FC<CommitDrawerProps> = ({
     setLoading(true);
     setError(null);
 
-    fetchCommitDetails(sha, repoPath)
+    source.commit(sha, repoPath)
       .then((data) => {
         if (active) setDetails(data);
       })
@@ -88,7 +89,7 @@ export const CommitDrawer: React.FC<CommitDrawerProps> = ({
         <div className={styles.content}>
           {loading && (
             <div className={styles.loadingState}>
-              <span className={styles.candle}>🕯</span>
+              <span className={styles.candle}><Wick mood="silent" size={20} /></span>
               <p>Summoning commit details…</p>
             </div>
           )}

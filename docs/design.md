@@ -3,9 +3,13 @@
 The Ghost Maintainer web interface was engineered following the principles of [`apple-grade-design`](https://developer.apple.com/design/human-interface-guidelines/).
 
 The guiding metaphor is:
-> **A quiet archive at midnight, lit by candlelight, not a laser show.**
+> **A tactile midnight archive lit by candlelight, with scholarly gravitas and playful occult craft.**
 
-We deliberately avoided novelty Halloween aesthetics—no neon greens, no animated cartoon skulls, no jarring sound effects. The interface feels scholarly, respectful, tactile, and quiet.
+The design balances academic dignity with delightful virality:
+- Deep obsidian and warm amber parchment tones.
+- Original vector artwork mascot (**Wick**, the candle-flame spirit) replacing novelty emojis.
+- Zero external audio files: WebAudio-synthesized atmospheric audio cues (flame whoosh, glass-tick, sub-thud).
+- Cryptographic and archaeological evidence surfaced in high-density, interactive views.
 
 ---
 
@@ -15,18 +19,17 @@ We use the **OKLCH** color model to guarantee predictable lightness contrasts ac
 
 | Token Name | OKLCH Value | Semantic Role |
 | :--- | :--- | :--- |
-| `--bg-base` | `oklch(0.14 0.012 55)` | Deep archival obsidian background |
-| `--bg-surface` | `oklch(0.18 0.016 60)` | Elevated drawer, rail, and card surfaces |
-| `--bg-surface-raised` | `oklch(0.22 0.020 65)` | Popovers, active citation cards |
-| `--border-subtle` | `oklch(0.28 0.018 60)` | Hairline dividers and grid lines |
-| `--text-primary` | `oklch(0.96 0.008 80)` | Ghost voice narrative and headings |
-| `--text-secondary` | `oklch(0.74 0.012 75)` | Commit metadata, diff lines, author names |
-| `--text-muted` | `oklch(0.52 0.010 70)` | Timestamps, file paths, disclaimers |
-| `--accent-amber` | `oklch(0.78 0.160 75)` | Verified citations, focus rings, primary actions |
-| `--accent-amber-glow` | `oklch(0.78 0.160 75 / 0.15)` | Soft ambient glow for active elements |
-| `--status-verified` | `oklch(0.72 0.140 145)` | Muted sage green for grounded assertions |
-| `--status-refused` | `oklch(0.65 0.020 60)` | Ash gray for "The dead do not remember" |
-| `--status-warning` | `oklch(0.70 0.160 50)` | Muted terracotta for self-correction alerts |
+| `--color-bg` | `oklch(14% 0.01 60)` | Deep archival obsidian background |
+| `--color-surface` | `oklch(18% 0.012 60)` | Elevated drawer, rail, and card surfaces |
+| `--color-surface-2` | `oklch(22% 0.013 60)` | Hover states, tab containers, secondary cards |
+| `--color-border` | `oklch(28% 0.01 60)` | Hairline dividers and grid lines |
+| `--color-text` | `oklch(92% 0.01 80)` | Ghost voice narrative and primary headings |
+| `--color-text-muted` | `oklch(70% 0.01 80)` | Commit metadata, diff lines, author names |
+| `--color-text-dim` | `oklch(52% 0.01 80)` | Timestamps, file paths, disclaimers |
+| `--color-accent` | `oklch(78% 0.14 70)` | Warm candlelight amber: verified citations, primary actions |
+| `--color-spirit` | `oklch(82% 0.13 195)` | Ethereal cyan spirit: Wick mascot glow, Citation Constellation |
+| `--color-lie` | `oklch(66% 0.22 25)` | Flaming terracotta red: caught AI hallucinations and strikethroughs |
+| `--color-tombstone` | `oklch(26% 0.012 60)` | Granite gray: graveyard tombstones and cemetery epitaphs |
 
 ---
 
@@ -38,39 +41,68 @@ The typographic hierarchy balances literary gravitas with archaeological precisi
   - Variable serif font with soft optical sizing.
   - Used for ghost answers to convey the intimate, reflective collective voice of past maintainers.
 - **Interface & Metadata**: `Inter`
-  - Ultra-legible neutral sans-serif for UI labels, drawer headers, and commit cards.
+  - Ultra-legible neutral sans-serif for UI labels, tab navigation, and action buttons.
 - **Commit Hashes & Code**: `JetBrains Mono`
   - Fixed-width font with tabular figures for 7-character commit hashes, unified diffs, and CLI logs.
 
 ---
 
-## 3. The 10 Designed States
+## 3. Mascot: Wick, The Candle-Flame Spirit
 
-A robust, delightful UX accounts for every transition. Ghost Maintainer implements 10 explicit states:
+Wick is an original SVG vector entity with zero external dependencies. Wick reacts dynamically to pipeline states:
 
-1. **Idle Summon**: Clean hero asking for a local repository path or selecting from previously indexed repos.
-2. **Indexing Progress**: Real-time progress bar showing commits processed, elapsed time, and BM25 index status.
-3. **Query Composer**: Input field with hotkey hints (`Enter` to submit, example historical questions).
-4. **Evidence Rail**: Expandable side rail listing top-ranked BM25 commit evidence with scores.
-5. **Streaming Tokens**: SSE stream typing out tokens smoothly with soft amber cursor glow.
-6. **Reconsidering Indicator**: Gentle banner showing the model detected an ungrounded citation and is executing self-correction.
-7. **Verified Response**: Formatted ghost narrative with interactive, clickable `CitationChip` components.
-8. **Ungrounded Warning**: Subtle notice when citations were stripped because the repository had no matching diff evidence.
-9. **Dead Refusal**: Dignified quiet typography rendering *"The dead do not remember."* when query falls below retrieval gate.
-10. **System Diagnostics**: Detailed drawer showing backend status, GPU VRAM usage, and git execution times.
+| Mood | Visual Behavior | Trigger State |
+| :--- | :--- | :--- |
+| `idle` | Gentle vertical float, flame sway | Resting, waiting for inquiry |
+| `listening` | Eyes dilate, flame leans forward | Retrieving BM25 evidence |
+| `speaking` | Animated mouth, warm flickering aura | Streaming tokens from model |
+| `reconsidering` | Slight wobble, pursed mouth | Verifier caught violation; self-correcting |
+| `silent` | Closed peaceful eyes, dimmed flame wisp | Refusal: "The dead do not remember." |
 
 ---
 
-## 4. Accessibility & Apple HIG Standards (WCAG AA)
+## 4. The 4 Archaeological Views
 
-- **Contrast Ratios**: All text tokens maintain minimum $4.5:1$ contrast against their respective backgrounds ($7:1$ for primary narrative).
-- **Keyboard Traversal**:
-  - `Tab` cycles through questions, citation chips, and evidence cards.
-  - `Enter` / `Space` opens commit details in the drawer.
-  - `Escape` closes overlays and drawers.
-  - Explicit high-contrast focus rings (`outline: 2px solid var(--accent-amber)` with offset).
-- **Screen Reader Announcements**:
-  - `aria-live="polite"` regions inform screen readers of streaming tokens without overwhelming the user.
-  - Refusals and errors emit clear alerts.
-- **Reduced Motion**:
-  - `@media (prefers-reduced-motion: reduce)` disables pulse animations and smooth drawer slides, providing instant state transitions.
+1. **The Séance Room**
+   - Clean chat interface with Fraunces serif ghost voice.
+   - Interactive `CitationChip` tags linking to real commit records.
+   - Slide-out `CommitDrawer` showing full unified diffs and stat lines.
+   - Evidence Rail with `CitationConstellation` connecting cited commits by file changes.
+
+2. **The AI Lie Detector**
+   - Side-by-side comparison between Raw 4B Model (unfiltered) and The Guarded Pipeline.
+   - Red ink strike-through on fabricated hashes (`[deadbeef] ✗ LIE`).
+   - Forensic analysis explaining why the hallucination occurred.
+   - Demonstrates the 100% Citation Existence Rate and Refusal Recall.
+
+3. **The Graveyard Timeline**
+   - Stratigraphic commit density histogram over the repository's lifetime.
+   - Tombstone of Inactivity: exact date and subject of the final commit, plus days of silence.
+   - Departed maintainers leaderboard with commit counts.
+   - Historical era jump buttons.
+
+4. **The Cemetery Gallery**
+   - Tombstone cards for famous deprecated projects (`request`, `bower`, `atom`, `backbone`).
+   - Historical cause-of-death epitaphs.
+   - 3 curated questions per project + 1 intentional False-Premise Trap.
+
+---
+
+## 5. WebAudio Synthesized Sound Design
+
+To respect developer environments, sound is **off by default** and toggled via the TopBar.
+All sounds are mathematically synthesized via the WebAudio API:
+- `playFlameWhoosh()`: Filtered white noise burst on repository summon.
+- `playGlassTick()`: 1480Hz pure sine chime when a citation verifies against git.
+- `playLieThud()`: 110Hz -> 42Hz triangle sub-thud when an AI hallucination is struck.
+- `playEerieChime()`: E-major harmonic chord triad when the ghost speaks.
+- `playGhostChoir()`: 4-chord minor progression for the Konami code easter egg.
+
+---
+
+## 6. Accessibility & Apple HIG Standards (WCAG AA)
+
+- **Contrast Ratios**: Minimum 4.5:1 for UI labels; 7:1 for Fraunces ghost voice against deep obsidian.
+- **Keyboard Navigation**: Full Tab/Shift-Tab cycling through chips and cards; Escape closes modal and drawer.
+- **Reduced Motion**: All animations (flame sway, float, pulse) collapse to 0ms when `prefers-reduced-motion` is detected.
+- **Screen Readers**: `aria-live="polite"` regions stream tokens without interrupting user focus.

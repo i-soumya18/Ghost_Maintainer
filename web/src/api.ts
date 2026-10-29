@@ -67,38 +67,64 @@ export interface SummonParams {
 export async function* summonRepoStream(
   params: SummonParams
 ): AsyncGenerator<{ event: string; data: string }> {
-  const res = await fetch(`${API_BASE}/summon`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream, application/json',
-    },
-    body: JSON.stringify({
-      path: params.repo,
-      repo: params.repo,
-      source: params.repo,
-      mode: params.mode,
-    }),
+  const url = new URL(`${API_BASE}/summon/stream`, window.location.href);
+  url.searchParams.set('path', params.repo);
+
+  let res = await fetch(url.toString(), {
+    method: 'GET',
+    headers: { Accept: 'text/event-stream' },
     signal: params.signal,
-  });
+  }).catch(() => null);
+
+  // Fallback to POST /api/summon if server is running older build without SSE streaming route
+  if (!res || res.status === 404) {
+    res = await fetch(`${API_BASE}/summon`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify({
+        path: params.repo,
+        repo: params.repo,
+        source: params.repo,
+        mode: params.mode,
+      }),
+      signal: params.signal,
+    });
+  }
 
   if (!res.ok) {
     const errText = await res.text().catch(() => res.statusText);
     throw new Error(`Summon failed: ${errText}`);
   }
 
+  // Compatibility: a plain JSON body is treated as an immediate "done".
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
     const data = await res.json();
     yield { event: 'done', data: JSON.stringify(data) };
     return;
   }
-
   if (!res.body) {
     throw new Error('No response body');
   }
 
   yield* parseSSEStream(res.body, params.signal);
+}
+
+export interface Health {
+  status: string;
+  version: string;
+  backend?: string | null;
+}
+
+export async function fetchHealth(): Promise<Health> {
+  const res = await fetch(`${API_BASE}/health`);
+  if (!res.ok) {
+    throw new Error(`Health check failed: ${res.statusText}`);
+  }
+  return res.json();
 }
 
 async function* parseSSEStream(

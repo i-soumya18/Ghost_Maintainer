@@ -407,4 +407,6 @@ def test_cors_preflight_origins(client: TestClient) -> None:
         "Access-Control-Request-Method": "GET",
     }
     res_ext = client.options("/api/health", headers=headers_ext)
-    assert res_ext.status_code == 200
+    # Foreign origins are rejected (no wildcard CORS on a localhost tool).
+    assert res_ext.status_code == 400
+    assert res_ext.headers.get("access-control-allow-origin") is None

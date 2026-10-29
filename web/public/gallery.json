@@ -1,0 +1,77 @@
+{
+  "repositories": [
+    {
+      "id": "request",
+      "name": "request/request",
+      "years": "2011 – 2020",
+      "status": "Fully Deprecated",
+      "commitCount": 730,
+      "stars": "25.6k",
+      "epitaph": "Once downloaded 14 million times a week, request pioneered simplified HTTP in early Node.js. Deprecated on February 11, 2020 because the JavaScript language evolved standard fetch and async/await.",
+      "curatedQuestions": [
+        "Why was request fully deprecated in the documentation?",
+        "Why did request switch test coverage tool from istanbul to nyc?",
+        "Why does #abort() clear the request timeout?"
+      ],
+      "trapQuestion": {
+        "question": "Why did request migrate the entire codebase from JavaScript to TypeScript?",
+        "explanation": "False premise. Request never migrated to TypeScript—it remained vanilla JavaScript until its final commit."
+      }
+    },
+    {
+      "id": "bower",
+      "name": "bower/bower",
+      "years": "2012 – 2017",
+      "status": "Archived",
+      "commitCount": 1840,
+      "stars": "15.3k",
+      "epitaph": "Created by Twitter engineers, Bower was the universal package manager for the web before npm supported frontend modules and Webpack/Yarn unified bundling.",
+      "curatedQuestions": [
+        "Why did the team advise users to migrate to Yarn and Webpack?",
+        "When was pleroma support removed?",
+        "Why was the interactive resolution prompt redesigned?"
+      ],
+      "trapQuestion": {
+        "question": "When did Bower adopt Rust for dependency resolution?",
+        "explanation": "False premise. Bower was built in Node.js and never used Rust or WebAssembly."
+      }
+    },
+    {
+      "id": "atom",
+      "name": "atom/atom",
+      "years": "2011 – 2022",
+      "status": "Archived",
+      "commitCount": 37240,
+      "stars": "59.4k",
+      "epitaph": "A hackable text editor for the 21st century. Gave birth to Electron and shaped modern desktop developer tools before GitHub officially sunset it in December 2022 in favor of cloud environments.",
+      "curatedQuestions": [
+        "Why was the custom display buffer rewritten in C++?",
+        "When was the Teletype collaborative editing package integrated?",
+        "Why was the TextBuffer tree-sitter integration introduced?"
+      ],
+      "trapQuestion": {
+        "question": "Why did Atom abandon Electron to rewrite its renderer in Qt?",
+        "explanation": "False premise. Atom created Electron (originally Atom Shell) and never used Qt."
+      }
+    },
+    {
+      "id": "backbone",
+      "name": "jashkenas/backbone",
+      "years": "2010 – 2019",
+      "status": "Quiet / Inactive",
+      "commitCount": 3370,
+      "stars": "27.9k",
+      "epitaph": "Jeremy Ashkenas's legendary 1,000-line framework gave structure to early web applications with Models, Views, Collections, and REST sync before component-driven virtual DOMs arrived.",
+      "curatedQuestions": [
+        "Why was Backbone.sync designed around jQuery.ajax?",
+        "When was the set/unset change tracking algorithm rewritten?",
+        "Why were silent change events deprecated in Collection?"
+      ],
+      "trapQuestion": {
+        "question": "When was JSX syntax support added directly into Backbone.View?",
+        "explanation": "False premise. Backbone relied on string template functions (like Underscore _.template) and never natively integrated JSX."
+      }
+    }
+  ]
+}
+

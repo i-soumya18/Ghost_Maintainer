@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,6 +34,33 @@ class HealthResponse(BaseModel):
 
     status: str = "ok"
     version: str
+    backend: str | None = None
+
+
+class TimelineBucket(BaseModel):
+    """Commit count for one calendar month."""
+
+    month: str
+    count: int
+
+
+class AuthorCount(BaseModel):
+    """Commit count for one author."""
+
+    author: str
+    commits: int
+
+
+class TimelineResponse(BaseModel):
+    """Repository lifetime summary used by the Graveyard view."""
+
+    total_commits: int
+    first_date: str | None
+    last_date: str | None
+    last_subject: str | None
+    last_sha: str | None
+    buckets: list[TimelineBucket]
+    top_authors: list[AuthorCount]
 
 
 class SummonRequest(BaseModel):
@@ -111,7 +139,6 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
             "http://127.0.0.1:5173",
             "http://localhost:6660",
             "http://127.0.0.1:6660",
-            "*",
         ],
         allow_credentials=True,
         allow_methods=["*"],
@@ -122,12 +149,12 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
     @application.get("/health", response_model=HealthResponse)
     @application.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:
-        return HealthResponse(status="ok", version=__version__)
+        return HealthResponse(status="ok", version=__version__, backend=settings.backend)
 
-    # Summon endpoint
-    @application.post("/api/summon", response_model=SummonResponse)
-    def summon(req: SummonRequest) -> SummonResponse:
-        path_str = req.path.strip()
+    # Summon endpoints
+    def resolve_target(raw_path: str, force: bool) -> Path:
+        """Resolve a user-supplied path or git URL to a validated local git repository."""
+        path_str = raw_path.strip()
         is_url = path_str.startswith(("http://", "https://", "git@", "ssh://")) or (
             path_str.endswith(".git") and not Path(path_str).exists()
         )
@@ -144,7 +171,7 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
             clone_key = get_repo_cache_key(path_str)
             clone_dir = settings.cache_dir / "clones" / clone_key
             clone_dir.parent.mkdir(parents=True, exist_ok=True)
-            if not clone_dir.exists() or req.force:
+            if not clone_dir.exists() or force:
                 res = subprocess.run(
                     ["git", "clone", path_str, str(clone_dir)],
                     capture_output=True,
@@ -172,7 +199,7 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
                 else:
                     raise HTTPException(
                         status_code=404,
-                        detail=f"Directory '{req.path}' does not exist.",
+                        detail=f"Directory '{raw_path}' does not exist.",
                     )
 
         try:
@@ -180,9 +207,26 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
         except (GitError, NotAGitRepositoryError) as err:
             raise HTTPException(
                 status_code=400,
-                detail=f"Directory '{req.path}' is not a valid git repository: {err}",
+                detail=f"Directory '{raw_path}' is not a valid git repository: {err}",
             ) from None
+        return target_path
 
+    def build_summon_response(
+        target_path: Path, commit_count: int, meta: dict[str, Any]
+    ) -> SummonResponse:
+        return SummonResponse(
+            id=get_repo_cache_key(target_path),
+            name=target_path.name,
+            path=str(target_path).replace("\\", "/"),
+            head_sha=meta.get("head_sha"),
+            commit_count=meta.get("commit_count", commit_count),
+            indexed_at=meta.get("indexed_at", datetime.now(UTC).isoformat()),
+            status="ready",
+        )
+
+    @application.post("/api/summon", response_model=SummonResponse)
+    def summon(req: SummonRequest) -> SummonResponse:
+        target_path = resolve_target(req.path, req.force)
         try:
             commit_store, _, meta = index_repo(target_path, force=req.force)
         except Exception as err:
@@ -190,19 +234,72 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
                 status_code=500,
                 detail=f"Failed to index repository: {err}",
             ) from None
+        return build_summon_response(target_path, len(commit_store), meta)
 
-        repo_id = get_repo_cache_key(target_path)
-        canonical_path = str(target_path).replace("\\", "/")
+    PROGRESS_MESSAGES = {
+        "resolving": "Locating the archive…",
+        "reading": "Reading the commit history…",
+        "indexing": "Gathering memories…",
+        "saving": "Sealing the archive…",
+    }
 
-        return SummonResponse(
-            id=repo_id,
-            name=target_path.name,
-            path=canonical_path,
-            head_sha=meta.get("head_sha"),
-            commit_count=meta.get("commit_count", len(commit_store)),
-            indexed_at=meta.get("indexed_at", datetime.now(UTC).isoformat()),
-            status="ready",
-        )
+    @application.get("/api/summon/stream")
+    async def summon_stream(
+        path: str = Query(..., description="Local filesystem path or git URL"),
+        force: bool = Query(False, description="Whether to force rebuild index"),
+    ) -> EventSourceResponse:
+        """Index a repository while streaming real phase progress over SSE."""
+
+        async def gen() -> AsyncIterator[dict[str, str]]:
+            loop = asyncio.get_running_loop()
+            queue: asyncio.Queue[tuple[str, dict[str, Any]] | None] = asyncio.Queue()
+
+            def emit(event: str, payload: dict[str, Any]) -> None:
+                loop.call_soon_threadsafe(queue.put_nowait, (event, payload))
+
+            def work() -> None:
+                try:
+                    emit(
+                        "progress",
+                        {
+                            "phase": "resolving",
+                            "message": PROGRESS_MESSAGES["resolving"],
+                            "processed": 0,
+                            "total": 3,
+                        },
+                    )
+                    target = resolve_target(path, force)
+
+                    def on_progress(phase: str, step: int, total: int) -> None:
+                        emit(
+                            "progress",
+                            {
+                                "phase": phase,
+                                "message": PROGRESS_MESSAGES.get(phase, phase),
+                                "processed": step,
+                                "total": total,
+                            },
+                        )
+
+                    store, _, meta = index_repo(target, force=force, on_progress=on_progress)
+                    resp = build_summon_response(target, len(store), meta)
+                    emit("done", resp.model_dump())
+                except HTTPException as err:
+                    emit("error", {"message": str(err.detail)})
+                except Exception as err:
+                    emit("error", {"message": f"Failed to index repository: {err}"})
+                finally:
+                    loop.call_soon_threadsafe(queue.put_nowait, None)
+
+            task = loop.run_in_executor(None, work)
+            while True:
+                item = await queue.get()
+                if item is None:
+                    break
+                yield {"event": item[0], "data": json.dumps(item[1])}
+            await task
+
+        return EventSourceResponse(gen())
 
     # Repos endpoint
     @application.get("/api/repos", response_model=list[RepoSummary])
@@ -334,10 +431,14 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
         q: str = Query(..., description="Question to ask departed maintainers"),
         repo: str = Query(..., description="Path to target Git repository"),
         mode: Literal["guarded", "raw"] = Query("guarded", description="Verification mode"),
-        backend: str = Query("mock", description="LLM backend identifier"),
+        backend: str | None = Query(
+            None, description="LLM backend identifier (defaults to configured backend)"
+        ),
         k: int = Query(8, description="Number of evidence commits to retrieve"),
         min_score: float | None = Query(None, description="Score threshold override"),
     ) -> EventSourceResponse:
+        effective_backend = backend or settings.backend
+
         async def event_generator() -> AsyncIterator[dict[str, str]]:
             seance = Seance(min_score=min_score)
             try:
@@ -345,7 +446,7 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
                     question=q,
                     repo_path=Path(repo),
                     mode=mode,
-                    backend_name=backend,
+                    backend_name=effective_backend,
                     k=k,
                     min_score=min_score,
                 )
@@ -372,6 +473,67 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
                 }
 
         return EventSourceResponse(event_generator())
+
+    # Timeline endpoint (Graveyard view)
+    @application.get("/api/timeline", response_model=TimelineResponse)
+    def timeline(
+        repo: str = Query(..., description="Path to target Git repository"),
+    ) -> TimelineResponse:
+        repo_path = Path(repo).resolve()
+        if not repo_path.exists():
+            raise HTTPException(status_code=400, detail=f"Repository '{repo}' does not exist.")
+        try:
+            check_git_repo(repo_path)
+        except (GitError, NotAGitRepositoryError) as err:
+            raise HTTPException(
+                status_code=400, detail=f"Repository '{repo}' is not a valid git repository: {err}"
+            ) from None
+
+        cache_dir = get_repo_cache_dir(repo_path)
+        if (cache_dir / "commits.jsonl").exists():
+            commit_store, _, _ = load_index(cache_dir)
+        else:
+            commit_store, _, _ = index_repo(repo_path)
+
+        commits = list(commit_store)
+        if not commits:
+            return TimelineResponse(
+                total_commits=0, first_date=None, last_date=None, last_subject=None,
+                last_sha=None, buckets=[], top_authors=[],
+            )
+
+        counts: dict[str, int] = {}
+        authors: dict[str, int] = {}
+        for c in commits:
+            key = c.date.strftime("%Y-%m")
+            counts[key] = counts.get(key, 0) + 1
+            authors[c.author] = authors.get(c.author, 0) + 1
+        ordered = sorted(commits, key=lambda c: c.date)
+        last = ordered[-1]
+        return TimelineResponse(
+            total_commits=len(commits),
+            first_date=ordered[0].date.isoformat(),
+            last_date=last.date.isoformat(),
+            last_subject=last.subject,
+            last_sha=last.sha,
+            buckets=[TimelineBucket(month=m, count=n) for m, n in sorted(counts.items())],
+            top_authors=[
+                AuthorCount(author=a, commits=n)
+                for a, n in sorted(authors.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+            ],
+        )
+
+    # Honesty stats endpoint (landing page credibility strip)
+    @application.get("/api/stats")
+    def stats() -> dict[str, object]:
+        report = Path(__file__).parents[2] / "reports" / "latest.json"
+        if not report.exists():
+            return {}
+        try:
+            data = json.loads(report.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
 
     # Static assets mounting or fallback HTML landing page
     effective_dist: Path = (

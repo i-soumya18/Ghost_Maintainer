@@ -3,6 +3,7 @@ import type { Message, CitationStatus } from '../types';
 import { CitationChip } from './CitationChip';
 import { RefusalMessage } from './RefusalMessage';
 import { ReconsideringIndicator } from './ReconsideringIndicator';
+import { Wick } from './Wick';
 import styles from './VoiceMessage.module.css';
 
 interface VoiceMessageProps {
@@ -10,6 +11,8 @@ interface VoiceMessageProps {
   highlightedSha?: string | null;
   onHoverSha?: (sha: string | null) => void;
   onClickSha?: (sha: string) => void;
+  onShareProof?: (message: Message) => void;
+  onOpenLieDetector?: () => void;
 }
 
 function renderTextWithCitations(
@@ -60,6 +63,8 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   highlightedSha,
   onHoverSha,
   onClickSha,
+  onShareProof,
+  onOpenLieDetector,
 }) => {
   const { role, text, streamPhase, verdict, reconsidering } = message;
 
@@ -145,11 +150,28 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
     streamPhase,
   ]);
 
+  const verifiedSentences = verdict?.sentences?.filter((s) => s.status === 'verified').length || 0;
+  const totalSentences = verdict?.sentences?.length || 0;
+
   return (
     <div className={`${styles.bubbleWrapper} ${(styles as Record<string, string>)[role] || ''}`}>
       {role === 'assistant' && (
         <div className={styles.voiceLabel}>
-          <span className={styles.ghostGlyph}>🕯</span> The Departed
+          <span className={styles.ghostGlyph}>
+            <Wick
+              mood={
+                isSilence
+                  ? 'silent'
+                  : streamPhase === 'reconsidering'
+                  ? 'reconsidering'
+                  : streamPhase === 'streaming'
+                  ? 'speaking'
+                  : 'idle'
+              }
+              size={22}
+            />
+          </span>{' '}
+          The Departed
         </div>
       )}
 
@@ -157,6 +179,51 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
 
       <div className={styles.bubble}>
         {content}
+
+        {role === 'assistant' && !isSilence && streamPhase !== 'streaming' && (
+          <div className={styles.messageFooter}>
+            <div className={styles.verdictBar}>
+              {verdict && totalSentences > 0 ? (
+                <span className={styles.verifiedCountBadge}>
+                  ✓ {verifiedSentences}/{totalSentences} claims verified against git
+                </span>
+              ) : (
+                <span className={styles.forensicBadge}>Forensically verified</span>
+              )}
+            </div>
+
+            <div className={styles.actionButtons}>
+              {onOpenLieDetector && (
+                <button
+                  type="button"
+                  className={styles.lieDetectorBtn}
+                  onClick={onOpenLieDetector}
+                  title="Compare with what an unverified raw AI would claim"
+                >
+                  ⚡ Compare in Lie Detector
+                </button>
+              )}
+
+              {onShareProof && text.trim() && (
+                <button
+                  type="button"
+                  className={styles.shareProofBtn}
+                  onClick={() => onShareProof(message)}
+                  title="Generate downloadable 1200x630 proof card"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                  Share Proof
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {role === 'assistant' && !isSilence && (
           <footer className={styles.disclaimer}>

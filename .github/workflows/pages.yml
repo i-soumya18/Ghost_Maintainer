@@ -1,0 +1,73 @@
+name: Deploy replay demo to GitHub Pages
+
+# Builds the zero-install demo (VITE_MODE=replay) from REAL recorded sessions.
+# Fails closed: no verified recordings, no deploy.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "scripts/verify_replays.py"
+      - "scripts/replay_plan.json"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require recorded replays
+        run: |
+          test -f web/public/replays/index.json || {
+            echo "web/public/replays/index.json missing. Record sessions with scripts/record_replays.py first." >&2
+            exit 1
+          }
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Verify recordings (real backend, real commits, no e-mails, traps refused)
+        run: uv run python scripts/verify_replays.py web/public/replays
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install, test, build
+        working-directory: web
+        env:
+          VITE_MODE: replay
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+

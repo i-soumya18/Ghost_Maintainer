@@ -1,11 +1,203 @@
-.topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);background-color:var(--color-bg);border-bottom:1px solid var(--color-border);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.inner{display:flex;align-items:center;gap:1rem;height:100%;padding:0 var(--pad-page);max-width:calc(var(--col-main-w) + var(--rail-w) + var(--gap-layout) * 3);margin:0 auto}
-.brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
-.brandGlyph{color:var(--color-accent);font-size:1.1rem;animation:candleFlicker var(--motion-flicker) ease-in-out infinite;display:inline-block}
-.brandName{font-family:var(--font-ui);font-size:var(--text-sm);font-weight:600;color:var(--color-text-muted);letter-spacing:.04em;text-transform:uppercase}
-.repoInfo{display:flex;align-items:center;gap:.75rem;flex:1;min-width:0;padding-left:1rem;border-left:1px solid var(--color-border)}
-.repoPath{font-family:var(--font-evidence);font-size:var(--text-sm);color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
-.commitCount{font-family:var(--font-ui);font-size:var(--text-xs);color:var(--color-text-muted);white-space:nowrap;flex-shrink:0}
-.changeBtn{flex-shrink:0;font-family:var(--font-ui);font-size:var(--text-xs);color:var(--color-text-muted);background:transparent;border:1px solid var(--color-border);border-radius:var(--radius-btn);padding:.25rem .75rem;cursor:pointer;transition:color var(--duration-fast) var(--ease-standard),border-color var(--duration-fast) var(--ease-standard)}
-.changeBtn:hover,.changeBtn:focus-visible{color:var(--color-accent);border-color:var(--color-accent)}
-@keyframes candleFlicker{0%,to{opacity:1}30%{opacity:.85}60%{opacity:.95}80%{opacity:.8}}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--topbar-h);
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 100%;
+  padding: 0 var(--pad-page);
+  max-width: calc(var(--col-main-w) + var(--rail-w) + var(--gap-layout) * 3);
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.brandGlyph {
+  color: var(--color-accent);
+  display: inline-flex;
+  align-items: center;
+}
+
+.brandName {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mockBadge {
+  font-family: var(--font-evidence);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+}
+
+.replayBadge {
+  font-family: var(--font-evidence);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--color-spirit);
+  background: var(--color-spirit-bg);
+  border: 1px solid var(--color-spirit);
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+}
+
+.repoInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  padding-left: 1rem;
+  border-left: 1px solid var(--color-border);
+}
+
+.repoPath {
+  font-family: var(--font-evidence);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.commitCount {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tabNav {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 2px;
+  gap: 2px;
+}
+
+.tabBtn {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-btn) - 2px);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: var(--color-text);
+}
+
+.tabBtn.activeTab {
+  color: var(--color-accent);
+  background: var(--color-surface-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.iconBtn:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.iconBtn.soundActive {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+.githubLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-btn);
+  color: var(--color-text-dim);
+  border: 1px solid var(--color-border);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.githubLink:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.changeBtn {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.changeBtn:hover,
+.changeBtn:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+@media (max-width: 860px) {
+  .repoPath {
+    max-width: 120px;
+  }
+  .commitCount {
+    display: none;
+  }
+}

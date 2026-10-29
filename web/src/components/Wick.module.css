@@ -1,0 +1,94 @@
+.wick {
+  display: inline-block;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.glow {
+  transform-origin: 32px 32px;
+  animation: glowPulse var(--motion-flicker, 2.4s) ease-in-out infinite alternate;
+}
+
+.flame {
+  transform-origin: 32px 14px;
+  animation: flameSway var(--motion-flicker, 2.4s) ease-in-out infinite alternate;
+}
+
+.body {
+  transform-origin: 32px 52px;
+}
+
+.idle .body,
+.listening .body {
+  animation: float 3.6s ease-in-out infinite;
+}
+
+.speaking .body {
+  animation: float 1.8s ease-in-out infinite;
+}
+
+.reconsidering .body {
+  animation: wobble 0.9s ease-in-out infinite;
+}
+
+.silent .flame {
+  animation: none;
+  transform: scale(0.45);
+  opacity: 0.5;
+}
+
+.silent .glow {
+  animation: none;
+  opacity: 0.25;
+}
+
+.eyes {
+  transform-origin: 32px 31px;
+  animation: blink 5s infinite;
+}
+
+.mouth {
+  transform-origin: 32px 40px;
+  animation: talk 0.42s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  from { opacity: 0.7; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes flameSway {
+  from { transform: rotate(-4deg) scaleY(0.94); }
+  to { transform: rotate(4deg) scaleY(1.06); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+@keyframes talk {
+  from { transform: scaleY(0.55); }
+  to { transform: scaleY(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow,
+  .flame,
+  .body,
+  .eyes,
+  .mouth {
+    animation: none !important;
+  }
+}
+

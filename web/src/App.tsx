@@ -7,13 +7,18 @@ import type {
   AskState,
   Evidence,
 } from './types';
-import { fetchRepos, summonRepoStream, askQuestionStream } from './api';
-import { TopBar } from './components/TopBar';
+import { source } from './source';
+import { TopBar, type ActiveTab } from './components/TopBar';
 import { SummonScreen } from './components/SummonScreen';
 import { IndexingProgress } from './components/IndexingProgress';
 import { SeanceScreen } from './components/SeanceScreen';
 import { EvidenceRail } from './components/EvidenceRail';
 import { CommitDrawer } from './components/CommitDrawer';
+import { LieDetector } from './components/LieDetector';
+import { Graveyard } from './components/Graveyard';
+import { ProofCardModal } from './components/ProofCard';
+import type { ProofCardData } from './lib/share';
+import { playGhostChoir } from './lib/sound';
 import styles from './styles/App.module.css';
 
 const initialSummonState: SummonState = {
@@ -41,7 +46,7 @@ function useSummon() {
     });
 
     try {
-      for await (const { event, data } of summonRepoStream({
+      for await (const { event, data } of source.summon({
         repo: repoPath,
         signal: ac.signal,
       })) {
@@ -151,7 +156,7 @@ function useAsk() {
       });
 
       try {
-        for await (const { event, data } of askQuestionStream({
+        for await (const { event, data } of source.ask({
           question,
           repo,
           mode,
@@ -344,43 +349,50 @@ export const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [highlightedSha, setHighlightedSha] = useState<string | null>(null);
   const [drawerSha, setDrawerSha] = useState<string | null>(null);
+  const [backend, setBackend] = useState<string | null>(null);
+  const [curatedQuestions, setCuratedQuestions] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('seance');
+  const [proofModalData, setProofModalData] = useState<ProofCardData | null>(null);
+  const [konamiNotice, setKonamiNotice] = useState<string | null>(null);
+
+  const pendingAutoQuestion = useRef<string | null>(null);
+  const konamiSeq = useRef<string[]>([]);
 
   const { state: summonState, summon, reset: resetSummon } = useSummon();
   const { state: askState, ask, abort: abortAsk, reset: resetAsk } = useAsk();
 
   useEffect(() => {
-    fetchRepos().then(setKnownRepos).catch(() => {});
+    source.repos().then(setKnownRepos).catch(() => {});
+    source.health()
+      .then((h) => setBackend(h.backend ?? null))
+      .catch(() => {});
   }, []);
 
+  // Konami Code Easter Egg (↑ ↑ ↓ ↓ ← → ← → B A)
   useEffect(() => {
-    if (summonState.phase === 'done' && summonState.activeRepo) {
-      setActiveRepo(summonState.activeRepo);
-      resetSummon();
-      setMessages([]);
-    }
-  }, [summonState, resetSummon]);
-
-  useEffect(() => {
-    if (askState.phase !== 'idle') {
-      setMessages((prev) => {
-        if (prev.length === 0) return prev;
-        const last = prev[prev.length - 1];
-        if (last.role !== 'assistant') return prev;
-
-        const updated: Message = {
-          ...last,
-          text: askState.rawText,
-          evidence:
-            askState.evidence.length > 0 ? askState.evidence : last.evidence,
-          verdict: askState.verdict ?? last.verdict,
-          streamPhase: askState.phase,
-          reconsidering: askState.reconsidering ?? undefined,
-          error: askState.error ?? undefined,
-        };
-        return [...prev.slice(0, -1), updated];
-      });
-    }
-  }, [askState]);
+    const TARGET = [
+      'ArrowUp',
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowLeft',
+      'ArrowRight',
+      'b',
+      'a',
+    ];
+    const handleKeyDown = (e: KeyboardEvent) => {
+      konamiSeq.current = [...konamiSeq.current, e.key].slice(-10);
+      if (konamiSeq.current.join(',').toLowerCase() === TARGET.join(',').toLowerCase()) {
+        playGhostChoir();
+        setKonamiNotice('👻 Séance Choir Awakened! The spirits sing for Hacktoberfest 2026.');
+        setTimeout(() => setKonamiNotice(null), 5000);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleAsk = useCallback(
     (question: string) => {
@@ -410,14 +422,90 @@ export const App: React.FC = () => {
     [activeRepo, ask]
   );
 
+  useEffect(() => {
+    if (summonState.phase === 'done' && summonState.activeRepo) {
+      setActiveRepo(summonState.activeRepo);
+      source
+        .questions(summonState.activeRepo.path)
+        .then(setCuratedQuestions)
+        .catch(() => setCuratedQuestions([]));
+      resetSummon();
+      setMessages([]);
+      setActiveTab('seance');
+
+      // Check if an auto-question was pending from Gallery click
+      if (pendingAutoQuestion.current) {
+        const q = pendingAutoQuestion.current;
+        pendingAutoQuestion.current = null;
+        setTimeout(() => handleAsk(q), 150);
+      }
+    }
+  }, [summonState, resetSummon, handleAsk]);
+
+  useEffect(() => {
+    if (askState.phase !== 'idle') {
+      setMessages((prev) => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1];
+        if (last.role !== 'assistant') return prev;
+
+        const updated: Message = {
+          ...last,
+          text: askState.rawText,
+          evidence:
+            askState.evidence.length > 0 ? askState.evidence : last.evidence,
+          verdict: askState.verdict ?? last.verdict,
+          streamPhase: askState.phase,
+          reconsidering: askState.reconsidering ?? undefined,
+          error: askState.error ?? undefined,
+        };
+        return [...prev.slice(0, -1), updated];
+      });
+    }
+  }, [askState]);
+
+  const handleSummonWithQuestion = useCallback(
+    (repoPath: string, autoQuestion?: string) => {
+      if (autoQuestion) {
+        pendingAutoQuestion.current = autoQuestion;
+      }
+      summon(repoPath);
+    },
+    [summon]
+  );
+
   const handleChangeRepo = useCallback(() => {
     abortAsk();
     resetAsk();
     setActiveRepo(null);
     setMessages([]);
     setDrawerSha(null);
-    fetchRepos().then(setKnownRepos).catch(() => {});
+    setActiveTab('seance');
+    source.repos().then(setKnownRepos).catch(() => {});
   }, [abortAsk, resetAsk]);
+
+  const handleShareProof = useCallback(
+    (assistantMsg: Message) => {
+      if (!activeRepo) return;
+      const msgIdx = messages.findIndex((m) => m.id === assistantMsg.id);
+      const userQ = msgIdx > 0 && messages[msgIdx - 1].role === 'user'
+        ? messages[msgIdx - 1].text
+        : 'Interrogating codebase history';
+
+      const citations = assistantMsg.verdict?.sentences?.flatMap((s) => s.citations) || [];
+      const uniqueHashes = Array.from(new Set(citations));
+
+      setProofModalData({
+        repoName: activeRepo.name,
+        question: userQ,
+        answerSnippet: assistantMsg.text,
+        verifiedCount: assistantMsg.verdict?.verified_count || uniqueHashes.length,
+        totalCitations: assistantMsg.verdict?.total_count || uniqueHashes.length,
+        citedHashes: uniqueHashes,
+      });
+    },
+    [activeRepo, messages]
+  );
 
   const latestEvidence =
     askState.evidence.length > 0
@@ -432,7 +520,16 @@ export const App: React.FC = () => {
       <TopBar
         repo={activeRepo}
         onChangeRepo={activeRepo ? handleChangeRepo : undefined}
+        backend={backend}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
+
+      {konamiNotice && (
+        <div className={styles.konamiBanner} role="status">
+          {konamiNotice}
+        </div>
+      )}
 
       <div className={styles.mainLayout}>
         {summonState.phase === 'indexing' ? (
@@ -443,30 +540,56 @@ export const App: React.FC = () => {
             repoName={activeRepo?.name}
           />
         ) : activeRepo ? (
-          <>
-            <SeanceScreen
-              messages={messages}
-              onAsk={handleAsk}
-              streamPhase={askState.phase}
-              highlightedSha={highlightedSha}
-              onHoverSha={setHighlightedSha}
-              onClickSha={setDrawerSha}
+          activeTab === 'compare' ? (
+            <LieDetector
               repoName={activeRepo.name}
-            />
-            <EvidenceRail
-              evidence={latestEvidence}
-              highlightedSha={highlightedSha}
-              onHoverSha={setHighlightedSha}
               onClickSha={setDrawerSha}
-              isLoading={askState.phase === 'retrieving'}
             />
-          </>
+          ) : activeTab === 'graveyard' ? (
+            <Graveyard
+              repoPath={activeRepo.path}
+              repoName={activeRepo.name}
+              onAskEra={(q) => {
+                setActiveTab('seance');
+                handleAsk(q);
+              }}
+              onClickSha={setDrawerSha}
+            />
+          ) : (
+            <>
+              <SeanceScreen
+                messages={messages}
+                onAsk={handleAsk}
+                streamPhase={askState.phase}
+                highlightedSha={highlightedSha}
+                onHoverSha={setHighlightedSha}
+                onClickSha={setDrawerSha}
+                repoName={activeRepo.name}
+                suggestions={curatedQuestions}
+                onShareProof={handleShareProof}
+                onOpenLieDetector={() => setActiveTab('compare')}
+              />
+              <EvidenceRail
+                evidence={latestEvidence}
+                highlightedSha={highlightedSha}
+                onHoverSha={setHighlightedSha}
+                onClickSha={setDrawerSha}
+                isLoading={askState.phase === 'retrieving'}
+              />
+            </>
+          )
         ) : (
           <SummonScreen
-            onSummon={summon}
+            onSummon={handleSummonWithQuestion}
             knownRepos={knownRepos}
+            replayMode={source.mode === 'replay'}
             isLoading={false}
             error={summonState.error}
+            onOpenLieDetector={() => {
+              // Quick open demo repo in Lie Detector
+              summon('request');
+              setActiveTab('compare');
+            }}
           />
         )}
       </div>
@@ -476,6 +599,13 @@ export const App: React.FC = () => {
         repoPath={activeRepo?.path || ''}
         onClose={() => setDrawerSha(null)}
       />
+
+      {proofModalData && (
+        <ProofCardModal
+          data={proofModalData}
+          onClose={() => setProofModalData(null)}
+        />
+      )}
     </div>
   );
 };

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "test": "node --test ../tests/test_frontend_challenge.mjs ../tests/test_challenger_m4_adversarial.mjs"
+    "test": "node --test ../tests/test_frontend_challenge.mjs ../tests/test_challenger_m4_adversarial.mjs ../tests/test_replay.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@types/node": "^22.20.5",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",

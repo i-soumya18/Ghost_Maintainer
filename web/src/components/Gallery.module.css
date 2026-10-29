@@ -1,0 +1,283 @@
+.galleryContainer {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title {
+  font-family: var(--font-voice);
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  max-width: 580px;
+  line-height: 1.45;
+}
+
+.searchBox {
+  flex-shrink: 0;
+}
+
+.searchInput {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 0.5rem 0.9rem;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  outline: none;
+  width: 220px;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.searchInput:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent-glow);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.tombstoneCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-tombstone-border);
+  border-radius: var(--radius-card);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  transition: all var(--duration-std) var(--ease-standard);
+  position: relative;
+  overflow: hidden;
+}
+
+.tombstoneCard:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-card), 0 0 16px var(--color-accent-glow);
+  transform: translateY(-2px);
+}
+
+.cardHeader {
+  margin-bottom: 0.85rem;
+}
+
+.repoMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.statusBadge {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+  border: 1px solid rgba(220, 160, 50, 0.3);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.yearsBadge {
+  font-family: var(--font-evidence);
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+.repoName {
+  font-family: var(--font-voice);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.35rem;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-evidence);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.epitaph {
+  font-family: var(--font-voice);
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.inquiriesSection {
+  margin-bottom: 1rem;
+}
+
+.inquiriesTitle {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+  margin-bottom: 0.45rem;
+}
+
+.questionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.questionBtn {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  padding: 0.3rem 0.4rem;
+  border-radius: var(--radius-chip);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.questionBtn:hover {
+  background: var(--color-surface-2);
+}
+
+.bullet {
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.questionText {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.questionBtn:hover .questionText {
+  color: var(--color-accent);
+}
+
+.trapSection {
+  background: var(--color-error-bg);
+  border: 1px dashed rgba(220, 60, 40, 0.35);
+  border-radius: var(--radius-chip);
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.trapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.trapTag {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-error);
+  letter-spacing: 0.05em;
+}
+
+.trapInfo {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+  cursor: help;
+}
+
+.trapBtn {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.trapIcon {
+  color: var(--color-error);
+  font-size: 0.85rem;
+}
+
+.trapText {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+  transition: color var(--duration-fast);
+}
+
+.trapBtn:hover .trapText {
+  color: var(--color-error);
+}
+
+.cardFooter {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.summonActionBtn {
+  width: 100%;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 0.55rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.summonActionBtn:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: #12100e;
+  border-color: var(--color-accent);
+}
+

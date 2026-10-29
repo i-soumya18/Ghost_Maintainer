@@ -282,3 +282,74 @@ def test_static_mount_without_dist(tmp_path: Path) -> None:
     assert res.status_code == 200
     assert "The Ghost Maintainer" in res.text
     assert "Web UI bundle not built yet" in res.text
+
+
+def test_timeline_endpoint(client: TestClient, synthetic_repo: Path) -> None:
+    """GET /api/timeline summarises repository lifetime."""
+    res = client.get("/api/timeline", params={"repo": str(synthetic_repo)})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_commits"] > 0
+    assert sum(b["count"] for b in data["buckets"]) == data["total_commits"]
+    assert data["last_sha"]
+    assert data["top_authors"]
+
+
+def test_timeline_missing_repo(client: TestClient, tmp_path: Path) -> None:
+    """GET /api/timeline rejects nonexistent repositories."""
+    res = client.get("/api/timeline", params={"repo": str(tmp_path / "nope")})
+    assert res.status_code == 400
+
+
+def test_stats_endpoint_returns_object(client: TestClient) -> None:
+    """GET /api/stats always returns a JSON object."""
+    res = client.get("/api/stats")
+    assert res.status_code == 200
+    assert isinstance(res.json(), dict)
+
+
+def test_cors_rejects_foreign_origin(client: TestClient) -> None:
+    """Foreign origins are not echoed back as allowed."""
+    res = client.options(
+        "/api/health",
+        headers={"Origin": "http://evil.example", "Access-Control-Request-Method": "GET"},
+    )
+    assert res.headers.get("access-control-allow-origin") not in ("*", "http://evil.example")
+
+
+def _parse_sse(text: str) -> list[tuple[str, dict]]:
+    import json as _json
+
+    events: list[tuple[str, dict]] = []
+    for block in text.replace("\r\n", "\n").split("\n\n"):
+        name, data = "message", None
+        for line in block.split("\n"):
+            if line.startswith("event:"):
+                name = line[6:].strip()
+            elif line.startswith("data:"):
+                data = _json.loads(line[5:].strip())
+        if data is not None:
+            events.append((name, data))
+    return events
+
+
+def test_summon_stream_reports_real_phases(client: TestClient, synthetic_repo: Path) -> None:
+    """GET /api/summon/stream emits ordered progress phases and a final done event."""
+    res = client.get("/api/summon/stream", params={"path": str(synthetic_repo), "force": "true"})
+    assert res.status_code == 200
+    events = _parse_sse(res.text)
+    names = [n for n, _ in events]
+    assert names[-1] == "done"
+    phases = [d["phase"] for n, d in events if n == "progress"]
+    assert phases[0] == "resolving"
+    for expected in ("reading", "indexing", "saving"):
+        assert expected in phases
+    assert events[-1][1]["commit_count"] > 0
+
+
+def test_summon_stream_error_for_missing_dir(client: TestClient, tmp_path: Path) -> None:
+    """Streaming summon reports failures as an SSE error event."""
+    res = client.get("/api/summon/stream", params={"path": str(tmp_path / "nope")})
+    events = _parse_sse(res.text)
+    assert events[-1][0] == "error"
+    assert "does not exist" in events[-1][1]["message"]

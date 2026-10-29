@@ -1,0 +1,88 @@
+.constellationCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 1rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.constellationTag {
+  font-family: var(--font-evidence);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--color-spirit);
+}
+
+.nodeCount {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.edgeLine {
+  stroke: rgba(220, 160, 50, 0.14);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.activeLine {
+  stroke: var(--color-spirit);
+  stroke-width: 1.8;
+  animation: pulse 1.5s infinite;
+}
+
+.centerPivot {
+  fill: var(--color-border);
+}
+
+.nodeGroup {
+  cursor: pointer;
+  transition: transform var(--duration-fast);
+}
+
+.nodeGroup:hover {
+  transform: scale(1.15);
+}
+
+.nodeCircle {
+  fill: var(--color-surface-2);
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  transition: all var(--duration-fast);
+}
+
+.highlightedNode .nodeCircle {
+  fill: var(--color-spirit);
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  box-shadow: 0 0 12px var(--color-spirit);
+}
+
+.nodeLabel {
+  font-family: var(--font-evidence);
+  font-size: 0.65rem;
+  fill: var(--color-text-muted);
+  user-select: none;
+  pointer-events: none;
+}
+
+.highlightedNode .nodeLabel {
+  fill: var(--color-spirit);
+  font-weight: bold;
+}
+

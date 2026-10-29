@@ -168,13 +168,23 @@ We wanted the web interface to feel like a quiet university archive at midnight,
 Following Apple Human Interface Guidelines and WCAG AA standards:
 - **Perceptual OKLCH Palette**: Deep ink backgrounds (`oklch(0.14 0.012 55)`), warm amber parchment accents (`oklch(0.78 0.16 75)`), and muted moss green for verified citations.
 - **Typographic Duality**: The ghost's voice is rendered in `Fraunces`, a rich variable serif that conveys the thoughtful reflection of departed engineers. Technical metadata, diffs, and hashes are rendered in `Inter` and `JetBrains Mono`.
-- **Interactive Archaeological Chips**: Clicking any `[hash]` citation slides out a native commit drawer showing the author, date, message, and unified diff hunks retrieved directly from git storage.
+- **Wick, The Candle-Flame Spirit**: An original vector mascot reacting in real time to séance states (idle float, listening, speaking, reconsidering, and peaceful silence upon refusal).
+- **The AI Lie Detector**: A side-by-side verification audit that catches a raw 4B model hallucinating non-existent commits and strikes them through with animated red ink.
+- **The Graveyard Timeline**: A stratigraphic commit density histogram tracking the repository's lifetime from first commit to death, counting the exact days of silence.
+- **Citation Constellation**: Interactive SVG network graph linking cited commits by file changes and timeline order.
+- **Downloadable Proof Cards**: 1-click generation of 1200×630 forensic certificates with verified commit seals for Twitter/X, Reddit, or PR discussions.
+- **Atmospheric WebAudio**: Mathematical sound synthesis (warm flame whoosh on summon, glass-tick on verified citation, sub-thud on caught hallucination) — muted by default.
 
 ---
 
 ## 🚀 Try It Yourself
 
-You can run The Ghost Maintainer locally in under two minutes:
+### Zero Install: Interactive Hosted Replay Demo
+You can try The Ghost Maintainer right now in your browser with zero install:
+**[Launch Interactive Replay Demo](https://your-username.github.io/ghost-maintainer)**
+
+### Run Locally on Consumer Hardware (4GB VRAM)
+You can run The Ghost Maintainer locally with 100% privacy in under two minutes:
 
 ```bash
 # 1. Clone the repository
@@ -184,14 +194,14 @@ cd ghost-maintainer
 # 2. Install dependencies with uv
 uv sync --all-extras
 
-# 3. Check environment & hardware
+# 3. Check environment & hardware diagnostics
 uv run ghost doctor
 
 # 4. Summon an abandoned repository
 uv run ghost summon https://github.com/request/request.git
 
-# 5. Ask a question via CLI
-uv run ghost ask "Why did request switch test coverage tool to nyc?"
+# 5. Ask a question via CLI and get a shareable proof card
+uv run ghost share "Why was request fully deprecated in the documentation?"
 
 # 6. Launch the interactive Candlelit Archive Web UI
 uv run ghost serve --port 6660

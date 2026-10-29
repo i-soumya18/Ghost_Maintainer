@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Message, StreamPhase } from '../types';
 import { VoiceMessage } from './VoiceMessage';
+import { Wick } from './Wick';
+import { playEerieChime } from '../lib/sound';
 import styles from './SeanceScreen.module.css';
 
 interface SeanceScreenProps {
@@ -11,12 +13,15 @@ interface SeanceScreenProps {
   onHoverSha?: (sha: string | null) => void;
   onClickSha?: (sha: string) => void;
   repoName?: string;
+  suggestions?: string[];
+  onShareProof?: (message: Message) => void;
+  onOpenLieDetector?: () => void;
 }
 
 const SUGGESTED_QUESTIONS = [
-  'Why was the project deprecated?',
+  'Why was the project fully deprecated in the documentation?',
+  'Why did the project switch test coverage tool from istanbul to nyc?',
   'Why was the authentication subsystem rewritten?',
-  'What were the breaking changes in the major release?',
 ];
 
 export const SeanceScreen: React.FC<SeanceScreenProps> = ({
@@ -27,6 +32,9 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
   onHoverSha,
   onClickSha,
   repoName,
+  suggestions,
+  onShareProof,
+  onOpenLieDetector,
 }) => {
   const [inputVal, setInputVal] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -42,9 +50,15 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputVal.trim() && !isBusy) {
+      playEerieChime();
       onAsk(inputVal.trim());
       setInputVal('');
     }
+  };
+
+  const handleSuggestionClick = (q: string) => {
+    playEerieChime();
+    onAsk(q);
   };
 
   return (
@@ -56,7 +70,9 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
       <div className={styles.scrollArea}>
         {messages.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.candleIcon}>🕯</div>
+            <div className={styles.candleIcon}>
+              <Wick mood="listening" size={80} />
+            </div>
             <h2 className={styles.emptyTitle}>The Séance is Open</h2>
             <p className={styles.emptyText}>
               Ask about the choices, migrations, deprecations, and secrets buried within the
@@ -64,14 +80,14 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
             </p>
 
             <div className={styles.suggestions}>
-              <span className={styles.suggestionsHeader}>Suggested inquiries:</span>
+              <span className={styles.suggestionsHeader}>Curated inquiries for this archive:</span>
               <div className={styles.suggestionList}>
-                {SUGGESTED_QUESTIONS.map((q) => (
+                {(suggestions && suggestions.length > 0 ? suggestions : SUGGESTED_QUESTIONS).map((q) => (
                   <button
                     key={q}
                     type="button"
                     className={styles.suggestionBtn}
-                    onClick={() => onAsk(q)}
+                    onClick={() => handleSuggestionClick(q)}
                     disabled={isBusy}
                   >
                     "{q}"
@@ -89,6 +105,8 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
                 highlightedSha={highlightedSha}
                 onHoverSha={onHoverSha}
                 onClickSha={onClickSha}
+                onShareProof={onShareProof}
+                onOpenLieDetector={onOpenLieDetector}
               />
             ))}
             <div ref={bottomRef} />
@@ -103,7 +121,7 @@ export const SeanceScreen: React.FC<SeanceScreenProps> = ({
             className={styles.input}
             placeholder={
               isBusy
-                ? 'The spirits are speaking…'
+                ? 'The spirits are consulting git object storage…'
                 : 'Ask the departed maintainers…'
             }
             value={inputVal}

@@ -95,7 +95,13 @@ Target Git Repository (Strictly Read-Only)
   - `openai_compat`: Connects to local Ollama/llama.cpp instances or OpenAI endpoints via `GHOST_BASE_URL`.
   - `mock`: Deterministic 8-mode test harness (`honest`, `hallucinate`, `ungrounded`, `bare_hex`, `uncited`, `retry_repair`, `retry_fail`, `refuse`) for hermetic offline testing.
 - **Candlelit Archive Web UI (`web/`)**:
-  Tactile, quiet archival aesthetic built with OKLCH color tokens, Fraunces variable serif voice, JetBrains Mono evidence tags, Inter system UI, 10 distinct interactive states, bidirectional chip-to-evidence hover highlighting, and full WCAG AA accessibility.
+  Tactile archival aesthetic built with OKLCH color tokens, Fraunces variable serif voice, JetBrains Mono evidence tags, Inter system UI, and full WCAG AA accessibility.
+  - **The AI Lie Detector**: Side-by-side verification audit catching raw AI hallucinations with animated ink strike-through.
+  - **The Graveyard Timeline**: Stratigraphic commit density histogram, counting days of silence since the final commit.
+  - **Citation Constellation**: Interactive SVG network graph linking cited commits by file changes.
+  - **Archaeological Proof Cards**: 1-click generation of 1200×630 forensic certificates with verified commit seals.
+  - **Wick Mascot**: Original vector candle-flame spirit reacting in real time to séance states.
+  - **WebAudio Atmosphere**: Pure mathematical sound synthesis (flame whoosh, glass-tick, sub-thud) — muted by default.
 
 ---
 
@@ -210,6 +216,7 @@ Navigate to `http://localhost:6660` in your browser.
 | :--- | :--- | :--- | :--- |
 | `summon` | `<path-or-url>` | Clones (if remote) and indexes a git repository into `~/.ghost/<repo-hash>/`. | `uv run ghost summon ./my-repo` |
 | `ask` | `"<question>"`<br>`[--repo <path>]`<br>`[--k 8]`<br>`[--raw]`<br>`[--backend <name>]`<br>`[--json]` | Asks a single question. Emits colorized Rich verdict chips, cited commits, and evidence summary. | `uv run ghost ask "Why was Node 4 dropped?"` |
+| `share` | `"<question>"`<br>`[--repo <path>]`<br>`[--output <path>]`<br>`[--backend <name>]` | Generates a shareable proof certificate panel with Twitter intent and Reddit markdown. | `uv run ghost share "Why was request deprecated?"` |
 | `seance` | `[--repo <path>]`<br>`[--backend <name>]` | Interactive multi-turn terminal REPL session with history and commit inspection. | `uv run ghost seance` |
 | `serve` | `[--host 127.0.0.1]`<br>`[--port 6660]`<br>`[--repo <path>]` | Starts the FastAPI server with typed SSE endpoints and static Web UI hosting. | `uv run ghost serve --port 6660` |
 | `eval` | `<yaml-benchmark>`<br>`[--repo <path>]`<br>`[--modes raw,guarded]`<br>`[--backend <name>]` | Executes the honesty benchmark across test datasets and outputs Wilson CIs in JSON/MD. | `uv run ghost eval evals/request.yaml` |
@@ -224,7 +231,10 @@ The backend exposes a high-performance, typed asynchronous Server-Sent Events (S
 | Method | Endpoint | Payload / Params | SSE Event Types | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/summon` | `{"path": str}` | *(JSON response)* | Ingests and indexes repository; returns synchronous JSON `SummonResponse`. |
+| `GET` | `/api/summon/stream` | `?path=<str>&force=false` | `progress`, `done`, `error` | Streams real repository indexing phases over SSE. |
 | `GET` | `/api/repos` | *(none)* | *(JSON response)* | Lists indexed repositories and active commit counts. |
+| `GET` | `/api/timeline` | `?repo=<str>` | *(JSON response)* | Returns repository commit density histogram, authors, and death date. |
+| `GET` | `/api/stats` | *(none)* | *(JSON response)* | Returns latest honesty evaluation benchmark stats with Wilson CIs. |
 | `GET` | `/api/ask` | `?q=<str>&repo=<str>&mode=guarded` | `evidence`, `token`, `reconsidering`, `verdict`, `done`, `error` | Streams answer tokens, retry alerts, and sentence verification verdicts. |
 | `GET` | `/api/commit/{sha}` | `?repo=<str>` | *(JSON response)* | Fetches commit author, date, message, and unified diff hunks. |
 | `GET` | `/` | *(none)* | *(HTML)* | Serves pre-built Vite React application with SPA routing. |

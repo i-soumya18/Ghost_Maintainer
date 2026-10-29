@@ -1,1 +1,224 @@
-:root{--color-bg: oklch(14% .01 60);--color-surface: oklch(18% .012 60);--color-surface-2: oklch(22% .013 60);--color-border: oklch(28% .01 60);--color-text: oklch(92% .01 80);--color-text-muted: oklch(70% .01 80);--color-text-dim: oklch(52% .01 80);--color-accent: oklch(78% .14 70);--color-accent-dim: oklch(68% .1 70);--color-accent-bg: oklch(22% .05 60);--color-verified: var(--color-accent);--color-unverified: oklch(70% .02 260);--color-unverified-bg: oklch(20% .03 260);--color-error: oklch(65% .18 25);--color-error-bg: oklch(18% .06 25);--font-voice: "Fraunces", Georgia, "Times New Roman", serif;--font-evidence: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;--font-ui: "Inter", system-ui, -apple-system, sans-serif;--text-xs: clamp(.7rem, .65rem + .25vw, .8rem);--text-sm: clamp(.82rem, .78rem + .25vw, .95rem);--text-base: clamp(1rem, .95rem + .3vw, 1.13rem);--text-lg: clamp(1.15rem, 1.05rem + .5vw, 1.35rem);--text-xl: clamp(1.35rem, 1.2rem + .75vw, 1.65rem);--text-2xl: clamp(1.65rem, 1.4rem + 1.2vw, 2.1rem);--text-3xl: clamp(2rem, 1.7rem + 1.5vw, 2.7rem);--topbar-h: 3rem;--col-main-w: min(680px, 100%);--rail-w: 340px;--gap-layout: 1.5rem;--pad-card: 1.25rem 1.5rem;--pad-page: 1.5rem;--radius-card: 14px;--radius-chip: 8px;--radius-input: 10px;--radius-btn: 10px;--motion-flicker: 2.4s;--ease-standard: cubic-bezier(.2, 0, 0, 1);--ease-spring: cubic-bezier(.34, 1.56, .64, 1);--duration-fast: .14s;--duration-std: .28s;--duration-slow: .42s}@media (prefers-reduced-motion: reduce){:root{--motion-flicker: 0s;--ease-standard: linear;--ease-spring: linear;--duration-fast: 0ms;--duration-std: 0ms;--duration-slow: 0ms}}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}html{font-size:100%;scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{background-color:var(--color-bg);color:var(--color-text);font-family:var(--font-ui);font-size:var(--text-base);line-height:1.6;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;border-radius:4px}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--color-text-dim)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.ghost-voice{font-family:var(--font-voice);font-weight:300;font-optical-sizing:auto;letter-spacing:-.01em}.evidence-mono{font-family:var(--font-evidence);font-size:.875em}@keyframes fadeIn{0%{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}@keyframes shimmer{0%{opacity:.4}50%{opacity:.8}to{opacity:.4}}@keyframes candleFlicker{0%,to{opacity:1}30%{opacity:.92}60%{opacity:.96}80%{opacity:.88}}@keyframes pulse{0%,to{opacity:1}50%{opacity:.5}}@keyframes spin{to{transform:rotate(360deg)}}.fade-in{animation:fadeIn var(--duration-std) var(--ease-standard) both}#root{display:flex;flex-direction:column;min-height:100dvh}
+:root {
+  /* Archival OKLCH Color Palette */
+  --color-bg: oklch(14% 0.01 60);
+  --color-surface: oklch(18% 0.012 60);
+  --color-surface-2: oklch(22% 0.013 60);
+  --color-surface-raised: oklch(26% 0.016 65);
+  --color-border: oklch(28% 0.01 60);
+  --color-border-subtle: oklch(24% 0.008 60);
+
+  /* Typography Colors */
+  --color-text: oklch(92% 0.01 80);
+  --color-text-muted: oklch(70% 0.01 80);
+  --color-text-dim: oklch(52% 0.01 80);
+
+  /* Warm Archival Candlelight Amber */
+  --color-accent: oklch(78% 0.14 70);
+  --color-accent-dim: oklch(68% 0.1 70);
+  --color-accent-bg: oklch(22% 0.05 60);
+  --color-accent-glow: oklch(78% 0.14 70 / 0.25);
+
+  /* Spectral Ethereal Spirit Accent (Used for Wick, Constellation, Ghost Aura) */
+  --color-spirit: oklch(82% 0.13 195);
+  --color-spirit-dim: oklch(72% 0.09 195);
+  --color-spirit-bg: oklch(22% 0.04 195);
+  --color-spirit-glow: oklch(82% 0.13 195 / 0.22);
+
+  /* Verification & Lie Detection */
+  --color-verified: oklch(78% 0.14 70);
+  --color-verified-green: oklch(76% 0.15 145);
+  --color-unverified: oklch(70% 0.02 260);
+  --color-unverified-bg: oklch(20% 0.03 260);
+  --color-error: oklch(65% 0.18 25);
+  --color-error-bg: oklch(18% 0.06 25);
+  --color-lie: oklch(66% 0.22 25);
+  --color-lie-bg: oklch(20% 0.08 25);
+  --color-lie-glow: oklch(66% 0.22 25 / 0.35);
+
+  /* Graveyard & Tombstone Tones */
+  --color-tombstone: oklch(26% 0.012 60);
+  --color-tombstone-border: oklch(34% 0.015 60);
+
+  /* Fonts */
+  --font-voice: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-evidence: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  --font-ui: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Typography Scale */
+  --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+  --text-sm: clamp(0.82rem, 0.78rem + 0.25vw, 0.95rem);
+  --text-base: clamp(1rem, 0.95rem + 0.3vw, 1.13rem);
+  --text-lg: clamp(1.15rem, 1.05rem + 0.5vw, 1.35rem);
+  --text-xl: clamp(1.35rem, 1.2rem + 0.75vw, 1.65rem);
+  --text-2xl: clamp(1.65rem, 1.4rem + 1.2vw, 2.1rem);
+  --text-3xl: clamp(2rem, 1.7rem + 1.5vw, 2.7rem);
+
+  /* Layout & Elevations */
+  --topbar-h: 3.25rem;
+  --col-main-w: min(720px, 100%);
+  --rail-w: 360px;
+  --gap-layout: 1.5rem;
+  --pad-card: 1.25rem 1.5rem;
+  --pad-page: 1.5rem;
+  --radius-card: 14px;
+  --radius-chip: 8px;
+  --radius-input: 10px;
+  --radius-btn: 10px;
+  --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.5), 0 0 1px 1px var(--color-border);
+  --shadow-glow: 0 0 24px var(--color-accent-glow);
+  --shadow-spirit: 0 0 24px var(--color-spirit-glow);
+
+  /* Motion & Timings */
+  --motion-flicker: 2.4s;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 0.14s;
+  --duration-std: 0.28s;
+  --duration-slow: 0.42s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-flicker: 0s;
+    --ease-standard: linear;
+    --ease-spring: linear;
+    --duration-fast: 0ms;
+    --duration-std: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
+*, *:before, *:after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 100%;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.ghost-voice {
+  font-family: var(--font-voice);
+  font-weight: 300;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+.evidence-mono {
+  font-family: var(--font-evidence);
+  font-size: 0.875em;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+@keyframes candleFlicker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  30% { opacity: 0.92; transform: scale(0.98); }
+  60% { opacity: 0.96; transform: scale(1.02); }
+  80% { opacity: 0.88; transform: scale(0.97); }
+}
+
+@keyframes spiritPulse {
+  0%, 100% {
+    box-shadow: 0 0 12px var(--color-spirit-glow);
+  }
+  50% {
+    box-shadow: 0 0 24px var(--color-spirit-glow), 0 0 40px var(--color-spirit-glow);
+  }
+}
+
+@keyframes strikeThrough {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.fade-in {
+  animation: fadeIn var(--duration-std) var(--ease-standard) both;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}

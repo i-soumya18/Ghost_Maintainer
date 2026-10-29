@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Evidence } from '../types';
 import { CommitCard } from './CommitCard';
+import { Constellation } from './Constellation';
+import { Wick } from './Wick';
 import styles from './EvidenceRail.module.css';
 
 interface EvidenceRailProps {
@@ -22,7 +24,7 @@ export const EvidenceRail: React.FC<EvidenceRailProps> = ({
     <aside className={styles.rail} aria-label="Archaeological evidence cards">
       <div className={styles.stickyHeader}>
         <h3 className={styles.title}>
-          <span className={styles.flame}>🕯</span> Archive Evidence
+          <span className={styles.flame}><Wick mood="idle" size={18} /></span> Archive Evidence
         </h3>
         <span className={styles.count}>
           {evidence.length > 0
@@ -32,9 +34,18 @@ export const EvidenceRail: React.FC<EvidenceRailProps> = ({
       </div>
 
       <div className={styles.scrollArea}>
+        {evidence.length > 1 && (
+          <Constellation
+            evidence={evidence}
+            highlightedSha={highlightedSha}
+            onHoverSha={onHoverSha}
+            onClickSha={onClickSha}
+          />
+        )}
+
         {isLoading && evidence.length === 0 && (
           <div className={styles.emptyState}>
-            <div className={styles.pulsingFlame}>🕯</div>
+            <div className={styles.pulsingFlame}><Wick mood="listening" size={40} /></div>
             <p className={styles.emptyText}>Consulting the commit ledger…</p>
           </div>
         )}

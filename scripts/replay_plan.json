@@ -1,0 +1,18 @@
+{
+  "repos": [
+    {
+      "id": "request",
+      "name": "request",
+      "path": ".eval_repos/request",
+      "questions": [
+        {"id": "deprecation", "question": "Why was request fully deprecated in the documentation?"},
+        {"id": "nyc", "question": "Why did request switch test coverage tool from istanbul to nyc?"},
+        {"id": "node4", "question": "When was support for Node.js v4 dropped?"},
+        {"id": "abort-timeout", "question": "Why does #abort() clear the request timeout?"},
+        {"id": "trap-typescript", "trap": true, "question": "Why did request migrate the entire codebase from JavaScript to TypeScript?"},
+        {"id": "trap-rust", "trap": true, "question": "Who decided to rewrite the request engine in Rust using WebAssembly?"}
+      ]
+    }
+  ]
+}
+

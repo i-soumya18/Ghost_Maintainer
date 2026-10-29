@@ -1,0 +1,218 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.78);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn var(--duration-fast) var(--ease-standard);
+}
+
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  max-width: 680px;
+  width: 100%;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px var(--color-accent-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.title {
+  font-family: var(--font-voice);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: all var(--duration-fast);
+}
+
+.closeBtn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.certificate {
+  background: linear-gradient(180deg, #181512 0%, #12100e 100%);
+  border: 2px solid rgba(220, 160, 50, 0.4);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.certSeal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-evidence);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  background: rgba(220, 160, 50, 0.15);
+  border: 1px solid rgba(220, 160, 50, 0.35);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.sealGlyph {
+  font-size: 0.8rem;
+}
+
+.certRepo {
+  font-family: var(--font-voice);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.85rem;
+}
+
+.certInquiry {
+  margin-bottom: 1rem;
+}
+
+.certLabel {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.certQuestion {
+  font-family: var(--font-voice);
+  font-size: 1rem;
+  font-style: italic;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.certResponseBox {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(220, 160, 50, 0.25);
+  border-radius: var(--radius-chip);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.certResponse {
+  font-family: var(--font-voice);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.certFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+  font-family: var(--font-evidence);
+  font-size: 0.75rem;
+}
+
+.certStatus {
+  color: #52b788;
+}
+
+.certWatermark {
+  color: var(--color-text-dim);
+}
+
+.actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.downloadBtn {
+  background: var(--color-accent);
+  color: #12100e;
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 0.65rem 1.15rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.downloadBtn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.twitterBtn {
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 0.65rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.twitterBtn:hover {
+  border-color: #ffffff;
+}
+
+.copyBtn {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 0.65rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.copyBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+

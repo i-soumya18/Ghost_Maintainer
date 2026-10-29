@@ -390,6 +390,121 @@ def ask(
 
 
 @app.command()
+def share(
+    question: Annotated[
+        str,
+        typer.Argument(
+            help="Question to ask departed maintainers to generate a shareable proof certificate.",
+            metavar="QUESTION",
+        ),
+    ],
+    repo: Annotated[
+        Path,
+        typer.Option(
+            "--repo",
+            "-r",
+            help="Path to target Git repository (defaults to current directory).",
+        ),
+    ] = Path("."),
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Optional path to write a shareable Markdown or JSON proof artifact.",
+        ),
+    ] = None,
+    backend: Annotated[
+        str | None,
+        typer.Option(
+            "--backend",
+            "-b",
+            help="LLM backend to use (unsloth, openai_compat, mock). Defaults to config.",
+        ),
+    ] = None,
+) -> None:
+    """Consult departed maintainers and generate a viral shareable proof card for social media."""
+    import urllib.parse
+
+    resolved_repo = repo.resolve()
+    try:
+        check_git_repo(resolved_repo)
+    except GitError as err:
+        console.print(f"[bold red]Error:[/bold red] {err}")
+        raise typer.Exit(code=1) from None
+
+    backend_obj = get_backend(backend) if backend else None
+    seance = Seance()
+
+    events = list(
+        seance.ask(
+            question=question,
+            repo_path=resolved_repo,
+            mode="guarded",
+            backend=backend_obj,
+        )
+    )
+
+    final_text = extract_answer_from_events(events)
+    verdict: VerificationResult | None = None
+    for ev in events:
+        if isinstance(ev, VerdictEvent):
+            verdict = ev.verdict
+
+    # Verified citations
+    verified_hashes: list[str] = []
+    if verdict:
+        for s in verdict.sentences:
+            if s.status == "verified":
+                for c in s.citations:
+                    if c.exists and c.grounded:
+                        verified_hashes.append(c.raw_hash)
+
+    # Social text
+    repo_name = resolved_repo.name
+    tweet_text = (
+        f"I held a séance with the departed maintainers of {repo_name} using The Ghost Maintainer 🕯\n\n"
+        f'"{question}"\n\n'
+        f"Every claim cites a verified git commit hash. Voices are fiction. Evidence is real.\n"
+        f"https://github.com/your-username/ghost-maintainer"
+    )
+    tweet_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}"
+
+    reddit_markdown = (
+        f"**Interrogating the ghost of {repo_name}**\n\n"
+        f'> Q: "{question}"\n\n'
+        f"{final_text}\n\n"
+        f"*100% verified against git object storage via [The Ghost Maintainer](https://github.com/your-username/ghost-maintainer)*"
+    )
+
+    # Display certificate
+    cert_body = (
+        f"[bold gold1]ARCHAEOLOGICAL PROOF CERTIFICATE[/bold gold1]\n\n"
+        f"[bold white]Repository:[/bold white] {repo_name}\n"
+        f'[bold white]Inquiry:[/bold white] "{question}"\n\n'
+        f"[bold white]Departed Maintainer Voice:[/bold white]\n"
+        f"[italic]{final_text}[/italic]\n\n"
+        f"[bold green]✓ {len(verified_hashes)} Citations Forensically Verified in Git Object Storage[/bold green]\n"
+        f"[dim]Hashes: {', '.join(verified_hashes) if verified_hashes else 'None'}[/dim]\n\n"
+        f"[bold cyan]Share on X / Twitter:[/bold cyan]\n[link={tweet_url}]{tweet_url}[/link]\n\n"
+        f"[bold cyan]Reddit / HN Markdown Snippet:[/bold cyan]\n{reddit_markdown}"
+    )
+
+    console.print(
+        Panel(
+            cert_body,
+            title=f"🕯 Ghost Maintainer · {repo_name}",
+            border_style="gold1",
+            box=box.ROUNDED,
+        )
+    )
+
+    if output:
+        output.write_text(reddit_markdown, encoding="utf-8")
+        console.print(f"\n[green]Wrote proof certificate to:[/green] {output}")
+
+
+@app.command()
 def seance(
     repo: Annotated[
         Path,

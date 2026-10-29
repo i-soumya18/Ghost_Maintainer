@@ -1,0 +1,326 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.heroBanner {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-evidence);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+  border: 1px solid rgba(220, 160, 50, 0.3);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-family: var(--font-voice);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.tagline {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  max-width: 650px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.5;
+}
+
+.caseSelector {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.caseBtn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 0.65rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  max-width: 320px;
+  text-align: left;
+}
+
+.caseBtn:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
+
+.caseBtn.activeCaseBtn {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+  box-shadow: 0 0 16px var(--color-accent-glow);
+}
+
+.caseTag {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+.caseQuestion {
+  font-family: var(--font-voice);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.comparisonGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .comparisonGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.columnRaw,
+.columnGuarded {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.columnRaw {
+  border-top: 3px solid var(--color-error);
+}
+
+.columnGuarded {
+  border-top: 3px solid var(--color-accent);
+  box-shadow: 0 0 20px rgba(220, 160, 50, 0.08);
+}
+
+.colHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.colTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.statusIndicatorRed {
+  color: var(--color-error);
+  font-size: 0.8rem;
+}
+
+.statusIndicatorGreen {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+}
+
+.colTitle {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.colSub {
+  font-family: var(--font-evidence);
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+.narrativeBoxRaw,
+.narrativeBoxGuarded {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+}
+
+.narrativeText {
+  font-family: var(--font-voice);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  margin-bottom: 1.5rem;
+  white-space: pre-line;
+}
+
+.fakeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-evidence);
+  font-size: 0.85em;
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-chip);
+  padding: 0.1rem 0.45rem;
+  margin: 0 0.2rem;
+  text-decoration: line-through;
+  cursor: pointer;
+  animation: pulse 2s infinite;
+}
+
+.chipStrike {
+  font-weight: bold;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.ungroundedChip {
+  display: inline-flex;
+  font-family: var(--font-evidence);
+  font-size: 0.85em;
+  color: var(--color-unverified);
+  background: var(--color-unverified-bg);
+  border: 1px solid var(--color-unverified);
+  border-radius: var(--radius-chip);
+  padding: 0.1rem 0.45rem;
+  margin: 0 0.2rem;
+  cursor: pointer;
+}
+
+.verifiedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-evidence);
+  font-size: 0.85em;
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-chip);
+  padding: 0.1rem 0.45rem;
+  margin: 0 0.2rem;
+  cursor: pointer;
+}
+
+.checkMark {
+  font-size: 0.8rem;
+  color: var(--color-accent);
+}
+
+.citationAudit {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-chip);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+}
+
+.auditTitle {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.auditList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+}
+
+.auditDanger {
+  color: var(--color-error);
+}
+
+.auditWarning {
+  color: var(--color-unverified);
+}
+
+.auditSuccess {
+  color: var(--color-accent);
+}
+
+.refusalBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: 2rem 1rem;
+  gap: 1rem;
+}
+
+.refusalVoice {
+  font-family: var(--font-voice);
+  font-size: 1.45rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.refusalExplanation {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-text-dim);
+  max-width: 380px;
+  line-height: 1.45;
+}
+
+.verdictFooter {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.verdictIcon {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.verdictContent {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.verdictContent strong {
+  color: var(--color-text);
+}
+

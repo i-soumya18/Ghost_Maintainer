@@ -6,7 +6,7 @@ import json
 import re
 import shutil
 import subprocess
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -259,6 +259,7 @@ def index_repo(
     *,
     force: bool = False,
     cache_dir: Path | None = None,
+    on_progress: Callable[[str, int, int], None] | None = None,
 ) -> tuple[CommitStore, bm25s.BM25 | None, dict[str, Any]]:
     """Index a git repository, building BM25 model and CommitStore with cache persistence.
 
@@ -269,12 +270,18 @@ def index_repo(
         repo_path: Path to target git repository.
         force: If True, ignore existing cache and rebuild.
         cache_dir: Optional explicit cache directory override.
+        on_progress: Optional callback ``(phase, step, total_steps)`` invoked at the
+            real phase boundaries: ``reading``, ``indexing``, ``saving``.
 
     Returns:
         Tuple of (CommitStore, optional BM25 retriever, metadata dict).
     """
     resolved = Path(repo_path).resolve()
     check_git_repo(resolved)
+
+    def _progress(phase: str, step: int) -> None:
+        if on_progress is not None:
+            on_progress(phase, step, 3)
 
     target_cache_dir = cache_dir if cache_dir is not None else get_repo_cache_dir(resolved)
 
@@ -283,6 +290,7 @@ def index_repo(
         return load_index(target_cache_dir)
 
     # Re-index repository
+    _progress("reading", 0)
     commits = get_commits(resolved)
     head_sha = get_head_sha(resolved)
 
@@ -299,6 +307,7 @@ def index_repo(
         return CommitStore([]), None, meta
 
     # Build corpus texts
+    _progress("indexing", 1)
     corpus = [build_commit_document(c) for c in commits]
     stemmer = Stemmer.Stemmer("english")
     tokens = bm25s.tokenize(corpus, stopwords="en", stemmer=stemmer, show_progress=False)
@@ -310,5 +319,7 @@ def index_repo(
         retriever = bm25s.BM25()
         retriever.index(tokens, show_progress=False)
 
+    _progress("saving", 2)
     save_index(target_cache_dir, commits, retriever, meta)
+    _progress("saving", 3)
     return CommitStore(commits), retriever, meta
